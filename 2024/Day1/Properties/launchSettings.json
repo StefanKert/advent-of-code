@@ -2,7 +2,7 @@
   "profiles": {
     "Day1": {
       "commandName": "Project",
-      "commandLineArgs": "--extra-host-arg=--wasi --extra-host-arg=http --dir=."
+      "commandLineArgs": "--extra-host-arg=--wasi --extra-host-arg=http --dir=C:\\GitHub\\advent-of-code\\2024\\"
     }
   }
 }
