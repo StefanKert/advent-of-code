@@ -58,19 +58,3 @@ long GetLoops(Map map, Complex warden)
     ).ToDictionary();
     return (dataMap, dataMap.Single(kvp => kvp.Value == '^').Key);
 }
-
-static void RePrintMap(HashSet<(Complex pos, Complex dir)> map)
-{
-    Console.Clear();
-    var lastPoint = map.First();
-    foreach (var key in map)
-    {
-        if (lastPoint.pos.Imaginary != key.pos.Imaginary)
-        {
-            Console.WriteLine();
-        }
-        var innerChars = ".";
-        Console.Write(innerChars);
-        lastPoint = key;
-    }
-}
