@@ -11,6 +11,9 @@ public class SolutionDay6 : AbstractSolution
     Complex Up = Complex.ImaginaryOne;
     Complex TurnRight = -Complex.ImaginaryOne;
 
+    public SolutionDay6() : base() { }
+    public SolutionDay6(string filepath) : base(filepath) { }
+
     public override long Part1()
     {
         var demoMap = GetMap(_input);

@@ -5,6 +5,9 @@ solution.PrintSolutions();
 
 public class SolutionDay1 : AbstractSolution
 {
+    public SolutionDay1() : base() { }
+    public SolutionDay1(string filepath) : base(filepath) { }
+
     public override long Part1()
     {
         var lines = _input.Split(Environment.NewLine);

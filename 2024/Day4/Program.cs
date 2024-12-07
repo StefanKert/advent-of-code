@@ -13,6 +13,9 @@ public class SolutionDay4 : AbstractSolution
     Complex Left = -1;
     Complex Right = 1;
 
+    public SolutionDay4() : base() { }
+    public SolutionDay4(string filepath) : base(filepath) { }
+
     public override long Part1()
     {
         return PartOne(_input);

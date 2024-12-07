@@ -9,6 +9,11 @@
             _input = File.ReadAllText("input.txt");
         }
 
+        protected AbstractSolution(string filepath)
+        {
+            _input = File.ReadAllText(filepath);
+        }
+
         public abstract long Part1();
         public abstract long Part2();
 

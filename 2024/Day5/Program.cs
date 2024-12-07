@@ -5,6 +5,9 @@ solutionDay5.PrintSolutions();
 
 public class SolutionDay5 : AbstractSolution
 {
+    public SolutionDay5() : base() { }
+    public SolutionDay5(string filepath) : base(filepath) { }
+
     public override long Part1()
     {
         var (updates, comparer) = Parse(_input);

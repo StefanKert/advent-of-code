@@ -6,6 +6,9 @@ solution.PrintSolutions();
 
 public class SolutionDay3 : AbstractSolution
 {
+    public SolutionDay3() : base() { }
+    public SolutionDay3(string filepath) : base(filepath) { }
+
     public override long Part1()
     {
         return Regex.Matches(_input, @"mul\((\d+),(\d+)\)").Select(x => int.Parse(x.Groups[1].Value) * int.Parse(x.Groups[2].Value)).Sum();

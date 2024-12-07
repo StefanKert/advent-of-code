@@ -8,6 +8,9 @@ solution.PrintSolutions();
 
 public class SolutionDay7 : AbstractSolution
 {
+    public SolutionDay7() : base() { }
+    public SolutionDay7(string filepath) : base(filepath) { }
+
     public override long Part1()
     {
         var rules = ParseRules(_input);

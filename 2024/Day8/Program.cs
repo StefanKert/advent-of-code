@@ -5,6 +5,9 @@ solution.PrintSolutions();
 
 public class SolutionDay8 : AbstractSolution
 {
+    public SolutionDay8() : base() { }
+    public SolutionDay8(string filepath) : base(filepath) { }
+
     public override long Part1()
     {
         return 0;
