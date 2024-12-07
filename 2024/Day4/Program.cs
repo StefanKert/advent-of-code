@@ -12,12 +12,6 @@ public class SolutionDay4 : AbstractSolution
     Complex Down = Complex.ImaginaryOne;
     Complex Left = -1;
     Complex Right = 1;
-    private string _input;
-
-    public SolutionDay4()
-    {
-        _input = File.ReadAllText("input.txt");
-    }
 
     public override long Part1()
     {

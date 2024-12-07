@@ -2,6 +2,13 @@
 {
     public abstract class AbstractSolution
     {
+        protected string _input;
+
+        protected AbstractSolution()
+        {
+            _input = File.ReadAllText("input.txt");
+        }
+
         public abstract long Part1();
         public abstract long Part2();
 

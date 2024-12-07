@@ -5,18 +5,12 @@ solution.PrintSolutions();
 
 public class SolutionDay1 : AbstractSolution
 {
-    private string[] _lines;
-
-    public SolutionDay1()
-    {
-        _lines = File.ReadAllLines("input.txt");
-    }
-
     public override long Part1()
     {
+        var lines = _input.Split(Environment.NewLine);
         var leftList = new List<int>();
         var rightList = new List<int>();
-        foreach (var line in _lines)
+        foreach (var line in lines)
         {
             var parts = line.Split("   ");
             leftList.Add(int.Parse(parts[0]));
@@ -34,9 +28,10 @@ public class SolutionDay1 : AbstractSolution
 
     public override long Part2()
     {
+        var lines = _input.Split(Environment.NewLine);
         var leftList = new List<int>();
         var rightList = new List<int>();
-        foreach (var line in _lines)
+        foreach (var line in lines)
         {
             var parts = line.Split("   ");
             leftList.Add(int.Parse(parts[0]));

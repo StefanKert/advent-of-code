@@ -5,20 +5,16 @@ solution.PrintSolutions();
 
 public class SolutionDay2 : AbstractSolution
 {
-    private List<Row> _rows;
-
-    public SolutionDay2()
-    {
-        _rows = File.ReadAllLines("input.txt").Select(Row.Parse).ToList();
-    }
-
     public override long Part1()
     {
-        return _rows.Count(x => x.IsSafe());
+        var rows = _input.Split(Environment.NewLine).Select(Row.Parse).ToList();
+        return rows.Count(x => x.IsSafe());
     }
+
     public override  long Part2()
     {
-        return _rows.Count(x => x.IsSafeWithDampener());
+        var rows = _input.Split(Environment.NewLine).Select(Row.Parse).ToList();
+        return rows.Count(x => x.IsSafeWithDampener());
     }
 }
 
@@ -80,7 +76,6 @@ public record Row(List<int> reports)
         return false;
     }
 }
-
 
 public enum Direction
 {

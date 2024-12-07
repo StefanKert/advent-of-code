@@ -1,7 +1,6 @@
 ﻿using AdventOfCode.Helpers;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 var solution = new SolutionDay7();
@@ -9,26 +8,19 @@ solution.PrintSolutions();
 
 public class SolutionDay7 : AbstractSolution
 {
-    private List<Test> rules;
-
-    public SolutionDay7()
-    {
-        var input = File.ReadAllText("input.txt");
-        rules = ParseRules(input);
-    }
-
     public override long Part1()
     {
-        return GetSum(['+', '*']);
+        var rules = ParseRules(_input);
+        return GetSum(rules, ['+', '*']);
     }
 
     public override long Part2()
     {
-        return GetSum(['+', '*']);
+        var rules = ParseRules(_input);
+        return GetSum(rules, ['+', '*']);
     }
 
-
-    long GetSum(List<char> chars)
+    long GetSum(List<Test> rules, List<char> chars)
     {
         var longestRule = rules.MaxBy(x => x.numbers.Count).numbers.Count;
         var permutationDictionary = new Dictionary<int, List<string>>();

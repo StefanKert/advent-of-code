@@ -5,12 +5,6 @@ solutionDay5.PrintSolutions();
 
 public class SolutionDay5 : AbstractSolution
 {
-    private string _input;
-
-    public SolutionDay5()
-    {
-        _input = File.ReadAllText("input.txt");
-    }
     public override long Part1()
     {
         var (updates, comparer) = Parse(_input);

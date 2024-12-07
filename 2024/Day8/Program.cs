@@ -5,12 +5,6 @@ solution.PrintSolutions();
 
 public class SolutionDay8 : AbstractSolution
 {
-    public SolutionDay8()
-    {
-        //var input = File.ReadAllText("input.txt");
-        //rules = ParseRules(input);
-    }
-
     public override long Part1()
     {
         return 0;

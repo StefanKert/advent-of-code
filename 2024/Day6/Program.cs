@@ -10,12 +10,6 @@ public class SolutionDay6 : AbstractSolution
 {
     Complex Up = Complex.ImaginaryOne;
     Complex TurnRight = -Complex.ImaginaryOne;
-    private string _input;
-
-    public SolutionDay6()
-    {
-        _input = File.ReadAllText("input.txt");
-    }
 
     public override long Part1()
     {
