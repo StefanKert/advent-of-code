@@ -1,0 +1,16 @@
+spin_manifest_version = 2
+
+[application]
+authors = ["Stefan Kert <stefan.kert@sbg.at>"]
+description = ""
+name = "dotnet-spin"
+version = "1.0.0"
+
+[[trigger.http]]
+route = "/..."
+component = "dotnet-spin"
+
+[component.dotnet-spin]
+source = "bin/Release/net8.0/DotnetSpin.wasm"
+[component.dotnet-spin.build]
+command = "dotnet build -c Release"
