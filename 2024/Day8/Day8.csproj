@@ -11,10 +11,4 @@
     <ProjectReference Include="..\AdventOfCode.Helpers\AdventOfCode.Helpers.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="input.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

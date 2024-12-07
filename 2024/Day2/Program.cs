@@ -1,6 +1,26 @@
-﻿var rows = File.ReadAllLines("input.txt").Select(Row.Parse).ToList();
-Console.WriteLine($"Part 1: Safe rows count {rows.Count(x => x.IsSafe())}");
-Console.WriteLine($"Part 2: Safe rows count {rows.Count(x => x.IsSafeWithDampener())}");
+﻿using AdventOfCode.Helpers;
+
+var solution = new SolutionDay2();  
+solution.PrintSolutions();
+
+public class SolutionDay2 : AbstractSolution
+{
+    private List<Row> _rows;
+
+    public SolutionDay2()
+    {
+        _rows = File.ReadAllLines("input.txt").Select(Row.Parse).ToList();
+    }
+
+    public override long Part1()
+    {
+        return _rows.Count(x => x.IsSafe());
+    }
+    public override  long Part2()
+    {
+        return _rows.Count(x => x.IsSafeWithDampener());
+    }
+}
 
 public record Row(List<int> reports)
 {
@@ -43,7 +63,7 @@ public record Row(List<int> reports)
 
     public bool IsSafeWithDampener()
     {
-        if(IsSafe())
+        if (IsSafe())
         {
             return true;
         }

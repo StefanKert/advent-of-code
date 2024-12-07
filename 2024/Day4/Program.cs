@@ -1,76 +1,96 @@
-﻿using System.Collections.Immutable;
+﻿using AdventOfCode.Helpers;
+using System.Collections.Immutable;
 using System.Numerics;
 using Map = System.Collections.Immutable.ImmutableDictionary<System.Numerics.Complex, char>;
 
-Complex Up = -Complex.ImaginaryOne;
-Complex Down = Complex.ImaginaryOne;
-Complex Left = -1;
-Complex Right = 1;
+var solution = new SolutionDay4();
+solution.PrintSolutions();
 
-Console.WriteLine($"Part 1: XMAS Times {PartOne(File.ReadAllText("input.txt"))}");
-Console.WriteLine($"Part 2: MAS Cross {PartTwo(File.ReadAllText("input.txt"))}");
-
-Map GetMap(string input)
+public class SolutionDay4 : AbstractSolution
 {
-    var map = input.Split(Environment.NewLine);
-    return (
-        from y in Enumerable.Range(0, map.Length)
-        from x in Enumerable.Range(0, map[0].Length)
-        select new KeyValuePair<Complex, char>(Complex.ImaginaryOne * y + x, map[y][x])
-    ).ToImmutableDictionary();
-}
+    Complex Up = -Complex.ImaginaryOne;
+    Complex Down = Complex.ImaginaryOne;
+    Complex Left = -1;
+    Complex Right = 1;
+    private string _input;
 
-long PartOne(string input)
-{
-    var pattern = "XMAS";
-    var map = GetMap(input);
-    var xmasTimes = 0;
-    foreach (var key in map.Keys)
+    public SolutionDay4()
     {
-        foreach (var direction in new[] { Right, Right + Down, Down + Left, Down })
+        _input = File.ReadAllText("input.txt");
+    }
+
+    public override long Part1()
+    {
+        return PartOne(_input);
+    }
+    public override long Part2()
+    {
+        return PartTwo(_input);
+    }
+
+
+    Map GetMap(string input)
+    {
+        var map = input.Split(Environment.NewLine);
+        return (
+            from y in Enumerable.Range(0, map.Length)
+            from x in Enumerable.Range(0, map[0].Length)
+            select new KeyValuePair<Complex, char>(Complex.ImaginaryOne * y + x, map[y][x])
+        ).ToImmutableDictionary();
+    }
+
+    long PartOne(string input)
+    {
+        var pattern = "XMAS";
+        var map = GetMap(input);
+        var xmasTimes = 0;
+        foreach (var key in map.Keys)
         {
-            if(Match(pattern, map, xmasTimes, key, direction))
+            foreach (var direction in new[] { Right, Right + Down, Down + Left, Down })
             {
-                xmasTimes++;
+                if (Match(pattern, map, xmasTimes, key, direction))
+                {
+                    xmasTimes++;
+                }
             }
         }
+        return xmasTimes;
     }
-    return xmasTimes;
-}
 
-long PartTwo(string input)
-{
-    var pattern = "MAS";
-    var map = GetMap(input);
-    var xmasTimes = 0;
-    foreach (var key in map.Keys)
+    long PartTwo(string input)
     {
-        var point = key + Up + Left;
-        var direction = Down + Right;
-        var chars = Enumerable.Range(0, pattern.Length)
-                  .Select(i => map.GetValueOrDefault(point + i * direction))
-                  .ToArray();
-        if (Enumerable.SequenceEqual(chars, pattern) || Enumerable.SequenceEqual(chars, pattern.Reverse()))
+        var pattern = "MAS";
+        var map = GetMap(input);
+        var xmasTimes = 0;
+        foreach (var key in map.Keys)
         {
-            var innerPoint = key + Down + Left;
-            var innerDirection = Up + Right;
-            var innerChars = Enumerable.Range(0, pattern.Length)
-                      .Select(i => map.GetValueOrDefault(innerPoint + i * innerDirection))
+            var point = key + Up + Left;
+            var direction = Down + Right;
+            var chars = Enumerable.Range(0, pattern.Length)
+                      .Select(i => map.GetValueOrDefault(point + i * direction))
                       .ToArray();
-            if (Enumerable.SequenceEqual(innerChars, pattern) || Enumerable.SequenceEqual(innerChars, pattern.Reverse()))
+            if (Enumerable.SequenceEqual(chars, pattern) || Enumerable.SequenceEqual(chars, pattern.Reverse()))
             {
-                xmasTimes++;
+                var innerPoint = key + Down + Left;
+                var innerDirection = Up + Right;
+                var innerChars = Enumerable.Range(0, pattern.Length)
+                          .Select(i => map.GetValueOrDefault(innerPoint + i * innerDirection))
+                          .ToArray();
+                if (Enumerable.SequenceEqual(innerChars, pattern) || Enumerable.SequenceEqual(innerChars, pattern.Reverse()))
+                {
+                    xmasTimes++;
+                }
             }
         }
+        return xmasTimes;
     }
-    return xmasTimes;
-}
 
-static bool Match(string pattern, Map map, int xmasTimes, Complex key, Complex direction)
-{
-    var next = key + direction;
-    var chars = Enumerable.Range(0, pattern.Length)
-           .Select(i => map.GetValueOrDefault(key + i * direction))
-           .ToArray();
-    return Enumerable.SequenceEqual(chars, pattern) || Enumerable.SequenceEqual(chars, pattern.Reverse());
+    static bool Match(string pattern, Map map, int xmasTimes, Complex key, Complex direction)
+    {
+        var next = key + direction;
+        var chars = Enumerable.Range(0, pattern.Length)
+               .Select(i => map.GetValueOrDefault(key + i * direction))
+               .ToArray();
+        return Enumerable.SequenceEqual(chars, pattern) || Enumerable.SequenceEqual(chars, pattern.Reverse());
+    }
 }
