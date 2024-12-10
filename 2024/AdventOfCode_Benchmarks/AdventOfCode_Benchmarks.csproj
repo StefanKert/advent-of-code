@@ -2,19 +2,27 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net9.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.0" />
+		<PackageReference Include="BenchmarkDotNet" Version="0.14.1-nightly.20241126.197" />
+		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.14.1-nightly.20241126.197" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\AdventOfCode.Helpers\AdventOfCode.Helpers.csproj" />
 		<ProjectReference Include="..\Day1\Day1.csproj" />
+		<ProjectReference Include="..\Day2\Day2.csproj" />
+		<ProjectReference Include="..\Day3\Day3.csproj" />
+		<ProjectReference Include="..\Day4\Day4.csproj" />
+		<ProjectReference Include="..\Day5\Day5.csproj" />
+		<ProjectReference Include="..\Day6\Day6.csproj" />
+		<ProjectReference Include="..\Day7\Day7.csproj" />
+		<ProjectReference Include="..\Day8\Day8.csproj" />
+		<ProjectReference Include="..\Day9\Day9.csproj" />
 
 	</ItemGroup>
 
