@@ -1,8 +1,13 @@
 ﻿using AdventOfCode.Helpers;
+using System.Xml.Linq;
+using Fs = System.Collections.Generic.LinkedList<Block>;
+using Node = System.Collections.Generic.LinkedListNode<Block>;
+
 
 var solution = new SolutionDay9("input.txt");
 solution.PrintSolutions();
 
+record struct Block(int fileId, int length) { }
 //Console.WriteLine($"Part 2: {solution.Part2()}");
 
 public class SolutionDay9 : AbstractSolution
@@ -24,23 +29,6 @@ public class SolutionDay9 : AbstractSolution
         var dataAtDisk = GetDiskLayout();
         CompressOnlyFit(dataAtDisk);
         return GetCheckSum(dataAtDisk);
-    }
-
-    private static void PrintDataAtDisk(List<File> dataAtDisk)
-    {
-        return;
-        foreach (var file in dataAtDisk)
-        {
-            for (int i = 0; i < file.Size; i++)
-            {
-                Console.Write(file.Id);
-            }
-            for (int i = 0; i < file.Free; i++)
-            {
-                Console.Write(FREE);
-            }
-        }
-        Console.WriteLine();
     }
 
     private static long GetCheckSum(List<File> files)
@@ -105,7 +93,6 @@ public class SolutionDay9 : AbstractSolution
                     }
                 }
             }
-            PrintDataAtDisk(dataAtDisk);
         }
     }
 
@@ -130,8 +117,7 @@ public class SolutionDay9 : AbstractSolution
                     activeFile.Size = 0;
                     break;
                 }
-            }
-            PrintDataAtDisk(dataAtDisk);
+            }      
         }
     }
 
