@@ -71,7 +71,7 @@ public class SolutionDay6 : AbstractSolution
         var dataMap = (
             from y in Enumerable.Range(0, map.Length)
             from x in Enumerable.Range(0, map[0].Length)
-            select new KeyValuePair<Complex, char>(-Up * y + x, map[y][x])
+            select new KeyValuePair<Complex, char>(x + -Up * y, map[y][x])
         ).ToDictionary();
         return (dataMap, dataMap.Single(kvp => kvp.Value == '^').Key);
     }

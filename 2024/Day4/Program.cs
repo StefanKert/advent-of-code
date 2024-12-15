@@ -32,7 +32,7 @@ public class SolutionDay4 : AbstractSolution
         return (
             from y in Enumerable.Range(0, map.Length)
             from x in Enumerable.Range(0, map[0].Length)
-            select new KeyValuePair<Complex, char>(Complex.ImaginaryOne * y + x, map[y][x])
+            select new KeyValuePair<Complex, char>(x + Complex.ImaginaryOne * y , map[y][x])
         ).ToImmutableDictionary();
     }
 
