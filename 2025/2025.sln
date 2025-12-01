@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{834C4270-3BD8-489D-8204-4EA1DB7D5093}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day1", "src\Day1\Day1.csproj", "{89E271E9-5F17-44A5-9FFC-830AFF3899DC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{89E271E9-5F17-44A5-9FFC-830AFF3899DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89E271E9-5F17-44A5-9FFC-830AFF3899DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89E271E9-5F17-44A5-9FFC-830AFF3899DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89E271E9-5F17-44A5-9FFC-830AFF3899DC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{89E271E9-5F17-44A5-9FFC-830AFF3899DC} = {834C4270-3BD8-489D-8204-4EA1DB7D5093}
+	EndGlobalSection
+EndGlobal
