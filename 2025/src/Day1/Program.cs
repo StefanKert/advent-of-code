@@ -6,7 +6,6 @@ var maxPoint = 99;
 var minPoint = 0;
 var rotaionIndicators = new List<string> { "L", "R" };
 
-
 var rotations = File.ReadAllLines("input.txt").Select(x => (direction: Regex.Match(x, @"([LR])(\d+)").Groups[1].Value, steps: int.Parse(Regex.Match(x, @"([LR])(\d+)").Groups[2].Value))).ToList();
 
 // Part 1
@@ -93,11 +92,6 @@ static int CountAllPassingsOfZero(int maxPoint, int minPoint, List<(string direc
                 }
             }
         }
-        //if (position == 0)
-        //{
-        //    zeroCounts++;
-        //}
     }
-
     return zeroCounts;
 }
