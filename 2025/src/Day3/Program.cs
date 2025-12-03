@@ -15,13 +15,9 @@ static long Aggregate(List<long> batteries, int batteriesEnabled)
         return 0;
     }
 
-    var sum = 0L;
     var batteriesToEnable = batteriesEnabled - 1;
     var highestNumber = batteries[0..^batteriesToEnable].Max();
-    var indexOfHighest = batteries.IndexOf(highestNumber) + 1;
-    sum += highestNumber * (long) Math.Pow(10, batteriesToEnable);
-    sum += Aggregate(batteries[indexOfHighest..], batteriesToEnable);
-    return sum;
+    return highestNumber * (long) Math.Pow(10, batteriesToEnable) + Aggregate(batteries[(batteries.IndexOf(highestNumber) + 1)..], batteriesToEnable);
 }
 
 static List<List<long>> GetRawData(bool demo)
