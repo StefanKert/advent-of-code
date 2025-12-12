@@ -1,53 +1,22 @@
-﻿using System.Text.RegularExpressions;
+﻿var matrix = File.ReadAllLines("input.txt").Select(line => new List<char>(line)).ToList();
 
-var lines = File.ReadAllLines("input.txt");
-
-
-var matrix = new List<List<char>>();
-for (int i = 0; i < lines.Length; i++)
-{
-    matrix.Add(new List<char>());
-    foreach (var c in lines[i])
-    {
-        matrix[i].Add(c);
-    }
-}
 Solution1(matrix);
 Solution2(matrix);
 
 static void Solution1(List<List<char>> chars)
 {
-    var sum = 0L;
-    var lastRow = chars.Last();
-    var i = 0;
-    while (i < lastRow.Count)
-    {
-        var operation = lastRow[i];
-        var currentOperatorIndex = i;
-        var nextOperatorIndex = lastRow.FindIndex(i + 1, x => x == '+' || x == '*');
-        if (nextOperatorIndex == -1)
-        {
-            nextOperatorIndex = lastRow.Count + 1;
-        }
-
-        var result = 0L;
-        if (operation == '+')
-        {
-            result = chars.Take(chars.Count - 1).Sum(x => long.Parse(new string(x[i..(nextOperatorIndex - 1)].ToArray())));
-        }
-        if (operation == '*')
-        {
-            result = chars.Take(chars.Count - 1).Aggregate(1L, (acc, x) => acc * long.Parse(new string(x[i..(nextOperatorIndex - 1)].ToArray())));
-        }
-        sum += result;
-        i = nextOperatorIndex;
-    }
+    var sum = GetRanges(chars).Sum(range => chars[..^1].Select(x => new string([.. x[range.start..(range.end + 1)]])).Aggregate(range.operation == '+' ? 0L : 1L, (acc, x) => range.operation == '+' ? acc + long.Parse(x) : acc * long.Parse(x)));
     Console.WriteLine($"Day 6: {sum}");
 }
 
 static void Solution2(List<List<char>> chars)
 {
+    var sum = GetRanges(chars).Sum(range => Enumerable.Range(range.start, range.end + 1 - range.start).Select(n => new string([.. chars[..^1].Select(x => x[n])])).Aggregate(range.operation == '+' ? 0L : 1L, (acc, x) => range.operation == '+' ? acc + long.Parse(x) : acc * long.Parse(x)));
+    Console.WriteLine($"Day 6: {sum}");
+}
 
+static List<(int start, int end, char operation)> GetRanges(List<List<char>> chars)
+{
     var operatorRow = chars.Last();
 
     var ranges = new List<(int start, int end, char operation)>();
@@ -66,19 +35,5 @@ static void Solution2(List<List<char>> chars)
         }
     }
     ranges.Add((startRange, operatorRow.Count - 1, currentOperator));
-
-    var sum = 0L;
-    foreach (var range in ranges)
-    {
-        var numbers = Enumerable.Range(range.start, range.end + 1 - range.start).Select(n => new string([.. chars[..^1].Select(x => x[n])]));
-        if (range.operation == '+')
-        {
-            sum += numbers.Sum(x => long.Parse(x));
-        }
-        if(range.operation == '*')
-        {
-            sum += numbers.Aggregate(1L, (acc, x) => acc * long.Parse(x));
-        }
-    }
-    Console.WriteLine($"Day 6: {sum}");
+    return ranges;
 }
