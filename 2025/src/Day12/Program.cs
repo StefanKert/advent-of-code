@@ -1,126 +1,35 @@
-﻿var lines = File.ReadAllLines("input.txt");
+﻿var input = File.ReadAllLines("demo.txt").ToList();
+var lastIndex = input.LastIndexOf(string.Empty);
 
-var height = lines.Length;
-var width = lines[0].Length;
-
-var map = lines.SelectMany(line => line.ToCharArray().ToList()).ToList();
-var startingPoint = map.IndexOf('S');
-
-//Solution1(height, width, map, startingPoint);
-Solution2(height, width, map, startingPoint);
-
-void PrintMap(List<char> map, int width, int height)
+var shapeRows = input[..lastIndex];
+var shape = new List<List<string>>();
+for (int i = 0; i < shapeRows.Count; i++)
 {
-    var result = new System.Text.StringBuilder();
-    for (int y = 0; y < height; y++)
+    string? row = shapeRows[i];
+    if (row == "")
     {
-        for (int x = 0; x < width; x++)
-        {
-            result.Append(map[Index(x, y)]);
-        }
-        result.AppendLine();
+        continue;
     }
-    Console.Clear();
-    Console.WriteLine(result.ToString());
+    shape.Add(new List<string>
+    {
+        shapeRows[i + 1],
+        shapeRows[i + 2],
+        shapeRows[i + 3]
+    });
+    i += 3;
 }
-
-int Index(int x, int y) => y * width + x;
-
-bool InBounds(int x, int y, int width, int height) =>
-    x >= 0 && y >= 0 && x < width && y < height;
-
-void Solution1(int height, int width, List<char> map, int startingPoint)
+var regions = input[(lastIndex + 1)..].Select(x => (width: long.Parse(x.Split(":")[0].Split("x")[0]), height: long.Parse(x.Split(":")[0].Split("x")[1]), shapes: x.Split(":")[1].Split(" ", StringSplitOptions.RemoveEmptyEntries).Select(long.Parse).ToList())).ToList();
+var count = 0;
+foreach(var region in regions)
 {
-    var currentRow = 1;
-    // since we always know the row we can only store the beam location
-    var beams = new List<int>();
-    map[Index(startingPoint, currentRow)] = '|';
-    beams.Add(startingPoint);
-    var splitCounter = 0;
-
-    while (currentRow + 1 < height)
-    {
-        currentRow++;
-        var nextBeams = new List<int>();
-        foreach (var beam in beams)
-        {
-            if (map[Index(beam, currentRow)] == '.')
-            {
-                map[Index(beam, currentRow)] = '|'; // Continue the beam downwards
-                nextBeams.Add(beam);
-                // in this case we can keep the beam
-            }
-            else if (map[Index(beam, currentRow)] == '^')
-            {
-                // In this case we split it
-                if (InBounds(beam - 1, currentRow, width, height))
-                {
-                    map[Index(beam - 1, currentRow)] = '|'; // Continue the beam downwards
-                    nextBeams.Add(beam - 1);
-                }
-
-                if (InBounds(beam + 1, currentRow, width, height))
-                {
-                    map[Index(beam + 1, currentRow)] = '|'; // Continue the beam downwards
-                    nextBeams.Add(beam + 1);
-                }
-                splitCounter++;
-            }
-            else
-            {
-                map[Index(beam, currentRow)] = '|'; // Continue the beam downwards
-            }
-        }
-        PrintMap(map, width, height);
-        beams = nextBeams;
-    }
-    Console.WriteLine($"Starting Point: {splitCounter}");
+    var area = region.width * region.height;
+    var occupiedSquares = 7 * region.shapes[0] +
+                      7 * region.shapes[1] +
+                      7 * region.shapes[2] +
+                      7 * region.shapes[3] +
+                      6 * region.shapes[4] +
+                      5 * region.shapes[5];
+    if (area > occupiedSquares)
+        count++;
 }
-
-
-void Solution2(int height, int width, List<char> map, int startingPoint)
-{
-    var currentRow = 1;
-    // since we always know the row we can only store the beam location
-    var beams = new List<int>();
-    map[Index(startingPoint, currentRow)] = '|';
-
-    var splitCounter = WalkTree(height, width, map, startingPoint, currentRow);
-    Console.WriteLine($"Starting Point: {splitCounter}");
-}
-
-long WalkTree(int height, int width, List<char> map, int startingPoint, int currentRow)
-{
-    var distinctCount = 0L;
-    while (currentRow + 1 < height)
-    {
-        currentRow++;
-        if (map[Index(startingPoint, currentRow)] == '.')
-        {
-            map[Index(startingPoint, currentRow)] = '|'; // Continue the beam downwards
-        }
-        else if (map[Index(startingPoint, currentRow)] == '^')
-        {
-            if (InBounds(startingPoint - 1, currentRow, width, height))
-            {
-                distinctCount += WalkTree(height, width, [.. map], startingPoint - 1, currentRow - 1);
-            }
-            if (InBounds(startingPoint + 1, currentRow, width, height))
-            {
-                distinctCount += WalkTree(height, width, [.. map], startingPoint + 1, currentRow - 1);
-            }
-            break;
-        }
-        else
-        {
-            map[Index(startingPoint, currentRow)] = '|'; // Continue the beam downwards
-        }
-    }
-    var str = new string([.. map]);
-    if (currentRow + 1 < height)
-    {
-        return distinctCount;
-        //PrintMap(str.ToCharArray().ToList(), width, height);
-    }
-    return distinctCount + 1;
-}
+Console.WriteLine(count);
