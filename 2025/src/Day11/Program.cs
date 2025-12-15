@@ -1,29 +1,31 @@
 ﻿var lines = File.ReadAllLines("input.txt").ToDictionary(line => line.Split(':')[0], line => line.Split(':')[1].Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList());
-var startLabel = lines.ContainsKey("svr") ? "svr" : lines.First(x => x.Value.Contains("you")).Value.First(x => x == "you");
 
-var chains = WalkChain(lines, startLabel, false, false, new Dictionary<(string name, bool dac, bool fft), long>());
-Console.WriteLine(chains);
+var chains = WalkChain(lines, lines.First(x => x.Value.Contains("you")).Value.First(x => x == "you"), false, false, new Dictionary<(string name, bool dac, bool fft), long>());
+Console.WriteLine("Solution 1: " + chains);
+
+chains = WalkChain(lines, "svr", false, false, new Dictionary<(string name, bool dac, bool fft), long>(), true);
+Console.WriteLine("Solution 2: " + chains);
 
 static long WalkChain(Dictionary<string, List<string>> lines, string currentLabel, bool containsDac, bool containsFft,
-        Dictionary<(string name, bool dac, bool fft), long> cache)
+        Dictionary<(string name, bool dac, bool fft), long> cache, bool filter = false)
 {
     if (!cache.ContainsKey((currentLabel, containsDac, containsFft)))
     {
         var currentChain = 0L;
         if (lines.ContainsKey(currentLabel))
         {
-            if (currentLabel == "dac")
+            if (filter && currentLabel == "dac")
             {
                 containsDac = true;
             }
-            if (currentLabel == "fft")
+            if (filter && currentLabel == "fft")
             {
                 containsFft = true;
             }
 
             if (lines[currentLabel].Contains("out"))
             {
-                if (!containsDac || !containsFft)
+                if (filter && (!containsDac || !containsFft))
                 {
                     return 0;
                 }
@@ -32,7 +34,7 @@ static long WalkChain(Dictionary<string, List<string>> lines, string currentLabe
             var nextLabels = lines[currentLabel];
             foreach (var item in nextLabels)
             {
-                var chains = WalkChain(lines, item, containsDac, containsFft, cache);
+                var chains = WalkChain(lines, item, containsDac, containsFft, cache, filter);
                 if (chains > 0)
                 {
                     currentChain += chains;
