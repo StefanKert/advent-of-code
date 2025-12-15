@@ -4,7 +4,6 @@ var distances = CalculateDistances(junctionBoxes);
 
 (double distance, (long x, long y, long z) point1, (long x, long y, long z) point2) lastPoint = (0, (0, 0, 0), (0, 0, 0));
 var circuits = new List<List<(long x, long y, long z)>>();
-
 foreach (var point in distances.OrderBy(x => x.distance))
 {
     if (circuits.Any(x => x.Contains(point.point1) && x.Contains(point.point2)))

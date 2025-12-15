@@ -1,126 +1,50 @@
-﻿var lines = File.ReadAllLines("input.txt");
+﻿using System.Drawing;
 
-var height = lines.Length;
-var width = lines[0].Length;
+var coordinates = File.ReadAllLines("input.txt").Select(x => (x: long.Parse(x.Split(',')[0]), y: long.Parse(x.Split(',')[1]))).ToList();
+var distances = CalculateDistances(coordinates).OrderByDescending(x => x.distance).ToList();
 
-var map = lines.SelectMany(line => line.ToCharArray().ToList()).ToList();
-var startingPoint = map.IndexOf('S');
+var largestDistance = distances[0];
+var squareOfLargestDistance = Math.Abs(largestDistance.point1.x - largestDistance.point2.x - 1) * Math.Abs(largestDistance.point1.y - largestDistance.point2.y - 1);
 
-//Solution1(height, width, map, startingPoint);
-Solution2(height, width, map, startingPoint);
+long left = Math.Min(largestDistance.point1.x, largestDistance.point2.x);
+long right = Math.Max(largestDistance.point1.x, largestDistance.point2.x);
+long top = Math.Max(largestDistance.point1.y, largestDistance.point2.y);
+long bottom = Math.Min(largestDistance.point1.y, largestDistance.point2.y);
+long width = right - left + 1;
+long height = top - bottom + 1;
+Console.WriteLine(width * height);
 
-void PrintMap(List<char> map, int width, int height)
+static List<(double distance, (long x, long y) point1, (long x, long y) point2)> CalculateDistances(List<(long x, long y)> dataPoints)
 {
-    var result = new System.Text.StringBuilder();
-    for (int y = 0; y < height; y++)
+    List<(double distance, (long x, long y) point1, (long x, long y) point2)> distances = new();
+
+    var seen = new HashSet<(int, int)>();
+
+    for (int i = 0; i < dataPoints.Count; i++)
     {
-        for (int x = 0; x < width; x++)
+        for (int j = 0; j < dataPoints.Count; j++)
         {
-            result.Append(map[Index(x, y)]);
+            if (i == j) continue;
+
+            var a = Math.Min(i, j);
+            var b = Math.Max(i, j);
+
+            if (!seen.Add((a, b))) continue;
+
+            var d = Distance2D(dataPoints[i], dataPoints[j]);
+            distances.Add((d, dataPoints[i], dataPoints[j]));
         }
-        result.AppendLine();
     }
-    Console.Clear();
-    Console.WriteLine(result.ToString());
+
+    return distances;
 }
 
-int Index(int x, int y) => y * width + x;
-
-bool InBounds(int x, int y, int width, int height) =>
-    x >= 0 && y >= 0 && x < width && y < height;
-
-void Solution1(int height, int width, List<char> map, int startingPoint)
+static double Distance2D(
+    (long x, long y) point1,
+    (long x, long y) point2)
 {
-    var currentRow = 1;
-    // since we always know the row we can only store the beam location
-    var beams = new List<int>();
-    map[Index(startingPoint, currentRow)] = '|';
-    beams.Add(startingPoint);
-    var splitCounter = 0;
-
-    while (currentRow + 1 < height)
-    {
-        currentRow++;
-        var nextBeams = new List<int>();
-        foreach (var beam in beams)
-        {
-            if (map[Index(beam, currentRow)] == '.')
-            {
-                map[Index(beam, currentRow)] = '|'; // Continue the beam downwards
-                nextBeams.Add(beam);
-                // in this case we can keep the beam
-            }
-            else if (map[Index(beam, currentRow)] == '^')
-            {
-                // In this case we split it
-                if (InBounds(beam - 1, currentRow, width, height))
-                {
-                    map[Index(beam - 1, currentRow)] = '|'; // Continue the beam downwards
-                    nextBeams.Add(beam - 1);
-                }
-
-                if (InBounds(beam + 1, currentRow, width, height))
-                {
-                    map[Index(beam + 1, currentRow)] = '|'; // Continue the beam downwards
-                    nextBeams.Add(beam + 1);
-                }
-                splitCounter++;
-            }
-            else
-            {
-                map[Index(beam, currentRow)] = '|'; // Continue the beam downwards
-            }
-        }
-        PrintMap(map, width, height);
-        beams = nextBeams;
-    }
-    Console.WriteLine($"Starting Point: {splitCounter}");
-}
-
-
-void Solution2(int height, int width, List<char> map, int startingPoint)
-{
-    var currentRow = 1;
-    // since we always know the row we can only store the beam location
-    var beams = new List<int>();
-    map[Index(startingPoint, currentRow)] = '|';
-
-    var splitCounter = WalkTree(height, width, map, startingPoint, currentRow);
-    Console.WriteLine($"Starting Point: {splitCounter}");
-}
-
-long WalkTree(int height, int width, List<char> map, int startingPoint, int currentRow)
-{
-    var distinctCount = 0L;
-    while (currentRow + 1 < height)
-    {
-        currentRow++;
-        if (map[Index(startingPoint, currentRow)] == '.')
-        {
-            map[Index(startingPoint, currentRow)] = '|'; // Continue the beam downwards
-        }
-        else if (map[Index(startingPoint, currentRow)] == '^')
-        {
-            if (InBounds(startingPoint - 1, currentRow, width, height))
-            {
-                distinctCount += WalkTree(height, width, [.. map], startingPoint - 1, currentRow - 1);
-            }
-            if (InBounds(startingPoint + 1, currentRow, width, height))
-            {
-                distinctCount += WalkTree(height, width, [.. map], startingPoint + 1, currentRow - 1);
-            }
-            break;
-        }
-        else
-        {
-            map[Index(startingPoint, currentRow)] = '|'; // Continue the beam downwards
-        }
-    }
-    var str = new string([.. map]);
-    if (currentRow + 1 < height)
-    {
-        return distinctCount;
-        //PrintMap(str.ToCharArray().ToList(), width, height);
-    }
-    return distinctCount + 1;
+    return Math.Sqrt(
+        Math.Pow(point2.x - point1.x, 2) +
+        Math.Pow(point2.y - point1.y, 2)
+    );
 }
