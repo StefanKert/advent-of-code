@@ -1,35 +1,52 @@
-﻿var input = File.ReadAllLines("demo.txt").ToList();
+﻿// Note: input.txt should be in the same format as demo.txt:
+// - Shape definitions (0:, 1:, etc.) with 3x3 grid patterns using # and .
+// - Region definitions (WxH: count0 count1 count2 count3 count4 count5)
+var input = File.ReadAllLines("input.txt").ToList();
 var lastIndex = input.LastIndexOf(string.Empty);
 
+// Parse shapes and count their cell sizes
 var shapeRows = input[..lastIndex];
-var shape = new List<List<string>>();
+var shapeSizes = new List<int>();
 for (int i = 0; i < shapeRows.Count; i++)
 {
-    string? row = shapeRows[i];
-    if (row == "")
+    string row = shapeRows[i];
+    if (row == "" || !row.Contains(':'))
     {
         continue;
     }
-    shape.Add(new List<string>
+    // Found a shape header (e.g., "0:")
+    var shapeSize = 0;
+    for (int j = 1; j <= 3 && i + j < shapeRows.Count; j++)
     {
-        shapeRows[i + 1],
-        shapeRows[i + 2],
-        shapeRows[i + 3]
-    });
+        shapeSize += shapeRows[i + j].Count(c => c == '#');
+    }
+    shapeSizes.Add(shapeSize);
     i += 3;
 }
-var regions = input[(lastIndex + 1)..].Select(x => (width: long.Parse(x.Split(":")[0].Split("x")[0]), height: long.Parse(x.Split(":")[0].Split("x")[1]), shapes: x.Split(":")[1].Split(" ", StringSplitOptions.RemoveEmptyEntries).Select(long.Parse).ToList())).ToList();
-var count = 0;
-foreach(var region in regions)
+
+// Parse regions
+var regions = input[(lastIndex + 1)..]
+    .Where(x => !string.IsNullOrEmpty(x))
+    .Select(x => (
+        width: long.Parse(x.Split(":")[0].Split("x")[0]),
+        height: long.Parse(x.Split(":")[0].Split("x")[1]),
+        shapes: x.Split(":")[1].Split(" ", StringSplitOptions.RemoveEmptyEntries).Select(long.Parse).ToList()
+    )).ToList();
+
+// Part 1: Count regions where presents can fit
+var count = 0L;
+foreach (var region in regions)
 {
     var area = region.width * region.height;
-    var occupiedSquares = 7 * region.shapes[0] +
-                      7 * region.shapes[1] +
-                      7 * region.shapes[2] +
-                      7 * region.shapes[3] +
-                      6 * region.shapes[4] +
-                      5 * region.shapes[5];
-    if (area > occupiedSquares)
+    var occupiedSquares = 0L;
+    for (int i = 0; i < region.shapes.Count && i < shapeSizes.Count; i++)
+    {
+        occupiedSquares += shapeSizes[i] * region.shapes[i];
+    }
+    if (area >= occupiedSquares)
         count++;
 }
-Console.WriteLine(count);
+Console.WriteLine($"Solution 1: {count}");
+
+// Part 2: Just placing the star - no computation needed
+Console.WriteLine("Solution 2: *");
