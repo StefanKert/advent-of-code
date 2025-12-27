@@ -25,8 +25,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  # Build all day projects in parallel using matrix strategy
+  build-wasm:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        day: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,38 +49,92 @@ jobs:
       - name: Install jco CLI
         run: npm install -g @bytecodealliance/jco
 
-      - name: Build and transpile all day projects
+      - name: Build Day ${{ matrix.day }}
         run: |
-          mkdir -p 2025/src/AdventWasm/demo-app/wasm
+          DAY_DIR="2025/src/Day${{ matrix.day }}"
+          DAY_PADDED=$(printf "%02d" ${{ matrix.day }})
 
-          for day in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            DAY_DIR="2025/src/Day${day}"
-            DAY_PADDED=$(printf "%02d" $day)
-            if [ -d "$DAY_DIR" ]; then
-              echo "=========================================="
-              echo "Building Day ${day}..."
-              echo "=========================================="
-              cd "$DAY_DIR"
-              dotnet publish -c Release -o publish
+          if [ -d "$DAY_DIR" ]; then
+            echo "Building Day ${{ matrix.day }}..."
+            dotnet publish "$DAY_DIR" -c Release -o "$DAY_DIR/publish"
 
-              WASM_FILE=$(find publish -name "*.wasm" | head -1)
-              if [ -n "$WASM_FILE" ]; then
-                echo "Transpiling $WASM_FILE..."
-                jco transpile "$WASM_FILE" -o "../../AdventWasm/demo-app/wasm/day${DAY_PADDED}" --name "day${DAY_PADDED}"
-                echo "Day ${day} transpiled successfully"
-              else
-                echo "WARNING: No WASM file found for Day ${day}"
-              fi
-              cd - > /dev/null
+            WASM_FILE=$(find "$DAY_DIR/publish" -name "*.wasm" | head -1)
+            if [ -n "$WASM_FILE" ]; then
+              echo "Found WASM: $WASM_FILE"
+
+              # Create output directories
+              mkdir -p wasm-transpiled/day${DAY_PADDED}
+              mkdir -p wasm-raw
+
+              # Copy raw WASM file
+              cp "$WASM_FILE" "wasm-raw/day${DAY_PADDED}.wasm"
+
+              # Transpile to JS module
+              jco transpile "$WASM_FILE" -o "wasm-transpiled/day${DAY_PADDED}" --name "day${DAY_PADDED}"
+
+              echo "Day ${{ matrix.day }} built and transpiled successfully"
             else
-              echo "Directory $DAY_DIR not found, skipping"
+              echo "ERROR: No WASM file found for Day ${{ matrix.day }}"
+              exit 1
             fi
-          done
+          else
+            echo "ERROR: Directory $DAY_DIR not found"
+            exit 1
+          fi
 
-      - name: List transpiled files
+      - name: Upload transpiled WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-day-${{ matrix.day }}-transpiled
+          path: wasm-transpiled/
+          retention-days: 1
+
+      - name: Upload raw WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-day-${{ matrix.day }}-raw
+          path: wasm-raw/
+          retention-days: 1
+
+  # Combine all WASM files and build the web app
+  build-webapp:
+    runs-on: ubuntu-latest
+    needs: build-wasm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download all transpiled WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wasm-day-*-transpiled
+          path: 2025/src/AdventWasm/demo-app/wasm
+          merge-multiple: true
+
+      - name: Download all raw WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wasm-day-*-raw
+          path: raw-wasm-files
+          merge-multiple: true
+
+      - name: List WASM files
         run: |
-          echo "=== WASM directory structure ==="
+          echo "=== Transpiled WASM directory structure ==="
           ls -laR 2025/src/AdventWasm/demo-app/wasm/ || echo "No wasm directory"
+          echo ""
+          echo "=== Raw WASM files ==="
+          ls -la raw-wasm-files/ || echo "No raw wasm files"
+
+      - name: Copy raw WASM files to demo app
+        run: |
+          mkdir -p 2025/src/AdventWasm/demo-app/public/wasm-download
+          cp raw-wasm-files/*.wasm 2025/src/AdventWasm/demo-app/public/wasm-download/
 
       - name: Install demo app dependencies
         working-directory: 2025/src/AdventWasm/demo-app
@@ -90,17 +149,25 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload artifact
+      - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 2025/src/AdventWasm/demo-app/dist
+
+      - name: Upload WASM-only artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-files
+          path: raw-wasm-files/
+          retention-days: 90
 
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-webapp
+    if: github.event_name != 'pull_request'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

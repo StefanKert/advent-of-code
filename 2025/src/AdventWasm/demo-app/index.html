@@ -786,9 +786,9 @@
             return `Day${day}.wasm`;
         }
 
-        function getWasmPath(day) {
+        function getWasmDownloadPath(day) {
             const dayStr = day.toString().padStart(2, '0');
-            return `./wasm/day${dayStr}/day${dayStr}.wasm`;
+            return `./wasm-download/day${dayStr}.wasm`;
         }
 
         function updateWasmFileNames(day) {
@@ -916,7 +916,7 @@
                 statusEl.className = 'status loading';
                 statusEl.textContent = 'Downloading...';
 
-                const wasmPath = getWasmPath(currentDay);
+                const wasmPath = getWasmDownloadPath(currentDay);
                 const response = await fetch(wasmPath);
 
                 if (!response.ok) {
