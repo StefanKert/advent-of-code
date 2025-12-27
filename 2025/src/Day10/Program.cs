@@ -1,5 +1,19 @@
-var inputFile = args.Length > 0 ? args[0] : "input.txt";
-var lines = File.ReadAllLines(inputFile);
+// Support both file input and WASM (stdin/env) input
+string[] lines;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
+{
+    lines = aocInput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else if (Console.IsInputRedirected)
+{
+    lines = Console.In.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else
+{
+    var inputFile = args.Length > 0 ? args[0] : "input.txt";
+    lines = File.ReadAllLines(inputFile);
+}
 
 long totalPart1 = 0;
 long totalPart2 = 0;
@@ -11,8 +25,20 @@ foreach (var line in lines)
     totalPart2 += FindMinPressesPart2(joltage, buttons);
 }
 
-Console.WriteLine($"Part 1: {totalPart1}");
-Console.WriteLine($"Part 2: {totalPart2}");
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
+{
+    Console.WriteLine(totalPart1);
+}
+else if (partStr == "2")
+{
+    Console.WriteLine(totalPart2);
+}
+else
+{
+    Console.WriteLine($"Part 1: {totalPart1}");
+    Console.WriteLine($"Part 2: {totalPart2}");
+}
 
 (int[] goal, List<List<int>> buttons, int[] joltage) ParseLine(string line)
 {
@@ -100,7 +126,6 @@ long FindMinPressesPart2(int[] target, List<List<int>> buttons)
     int n = buttons.Count;
     int m = target.Length;
 
-    // Build matrix A where A[i,j] = 1 if button j affects counter i
     var matrix = new double[m, n + 1];
     for (int i = 0; i < m; i++)
     {
@@ -111,14 +136,12 @@ long FindMinPressesPart2(int[] target, List<List<int>> buttons)
         matrix[i, n] = target[i];
     }
 
-    // Gaussian elimination with partial pivoting
     int[] pivotCol = new int[m];
     for (int i = 0; i < m; i++) pivotCol[i] = -1;
 
     int row = 0;
     for (int col = 0; col < n && row < m; col++)
     {
-        // Find pivot
         int maxRow = row;
         for (int i = row + 1; i < m; i++)
         {
@@ -129,7 +152,6 @@ long FindMinPressesPart2(int[] target, List<List<int>> buttons)
         if (Math.Abs(matrix[maxRow, col]) < 1e-9)
             continue;
 
-        // Swap rows
         for (int j = 0; j <= n; j++)
         {
             (matrix[row, j], matrix[maxRow, j]) = (matrix[maxRow, j], matrix[row, j]);
@@ -137,7 +159,6 @@ long FindMinPressesPart2(int[] target, List<List<int>> buttons)
 
         pivotCol[row] = col;
 
-        // Eliminate
         for (int i = 0; i < m; i++)
         {
             if (i != row && Math.Abs(matrix[i, col]) > 1e-9)
@@ -155,7 +176,6 @@ long FindMinPressesPart2(int[] target, List<List<int>> buttons)
 
     int rank = row;
 
-    // Identify free variables
     var freeVars = new List<int>();
     var basicVars = new int[rank];
     int basicIdx = 0;
@@ -174,7 +194,6 @@ long FindMinPressesPart2(int[] target, List<List<int>> buttons)
         if (!isBasic) freeVars.Add(j);
     }
 
-    // If no free variables, we have a unique solution (if consistent)
     if (freeVars.Count == 0)
     {
         var solution = new double[n];
@@ -184,20 +203,17 @@ long FindMinPressesPart2(int[] target, List<List<int>> buttons)
             solution[col] = matrix[i, n] / matrix[i, col];
         }
 
-        // Check if all non-negative integers
         long total = 0;
         for (int j = 0; j < n; j++)
         {
             long val = (long)Math.Round(solution[j]);
             if (val < 0 || Math.Abs(solution[j] - val) > 1e-6)
-                return long.MaxValue; // No valid solution
+                return long.MaxValue;
             total += val;
         }
         return total;
     }
 
-    // With free variables, search over their values
-    // Free variables can range from 0 to some maximum
     int numFree = freeVars.Count;
     var freeMax = new int[numFree];
     for (int f = 0; f < numFree; f++)
@@ -209,7 +225,6 @@ long FindMinPressesPart2(int[] target, List<List<int>> buttons)
             freeMax[f] = Math.Min(freeMax[f], target[c]);
         }
         if (buttons[btnIdx].Count == 0) freeMax[f] = 0;
-        // Also limit by sum of targets
         freeMax[f] = Math.Min(freeMax[f], target.Max());
     }
 
@@ -225,7 +240,6 @@ void SearchFreeVars(int idx, int[] freeVals, int[] freeMax, List<int> freeVars,
 {
     if (idx == freeVals.Length)
     {
-        // Compute basic variables from free variables
         var solution = new double[n];
         for (int f = 0; f < freeVals.Length; f++)
         {
@@ -246,7 +260,6 @@ void SearchFreeVars(int idx, int[] freeVals, int[] freeMax, List<int> freeVars,
             solution[col] = rhs / matrix[i, col];
         }
 
-        // Check if valid (all non-negative integers)
         long total = 0;
         for (int j = 0; j < n; j++)
         {
@@ -263,7 +276,6 @@ void SearchFreeVars(int idx, int[] freeVals, int[] freeMax, List<int> freeVars,
         return;
     }
 
-    // Prune: current sum already exceeds best
     long currentSum = 0;
     for (int f = 0; f < idx; f++)
     {

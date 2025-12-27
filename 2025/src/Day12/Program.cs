@@ -1,13 +1,23 @@
-using System.Collections.Concurrent;
+// Support both file input and WASM (stdin/env) input
+string[] lines;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
+{
+    lines = aocInput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else if (Console.IsInputRedirected)
+{
+    lines = Console.In.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else
+{
+    var inputFile = args.Length > 0 ? args[0] : "input.txt";
+    lines = File.ReadAllLines(inputFile);
+}
 
-var inputFile = args.Length > 0 ? args[0] : "input.txt";
-var input = File.ReadAllLines(inputFile).ToList();
-
+var input = lines.ToList();
 var (shapes, regions) = ParseInput(input);
 
-Console.WriteLine($"Loaded {shapes.Count} shapes and {regions.Count} regions");
-
-// Pre-compute all orientations for each shape
 var allOrientations = new List<List<(int x, int y)>[]>();
 var shapeCellCounts = new List<int>();
 
@@ -18,7 +28,6 @@ foreach (var shape in shapes)
     shapeCellCounts.Add(shape.Cells.Count);
 }
 
-// Part 1: Count how many regions can fit all their presents (parallel)
 int count = 0;
 object lockObj = new object();
 
@@ -32,7 +41,19 @@ Parallel.For(0, regions.Count, r =>
     }
 });
 
-Console.WriteLine($"Part 1: {count}");
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
+{
+    Console.WriteLine(count);
+}
+else if (partStr == "2")
+{
+    Console.WriteLine(count);
+}
+else
+{
+    Console.WriteLine($"Part 1: {count}");
+}
 
 (List<Shape> shapes, List<Region> regions) ParseInput(List<string> lines)
 {
@@ -133,7 +154,6 @@ bool CanFitAllPresents(int width, int height, int[] quantities,
     if (totalCellsNeeded > width * height)
         return false;
 
-    // Build list of pieces - include shape index for each piece
     var piecesToPlace = new List<int>();
     for (int s = 0; s < quantities.Length; s++)
     {
@@ -141,7 +161,6 @@ bool CanFitAllPresents(int width, int height, int[] quantities,
             piecesToPlace.Add(s);
     }
 
-    // Sort by size (larger pieces first for better pruning)
     piecesToPlace = piecesToPlace.OrderByDescending(s => shapeCellCounts[s]).ToList();
 
     var grid = new bool[width, height];
@@ -154,7 +173,6 @@ bool TryPlace(bool[,] grid, int width, int height, List<int> pieces, int pieceId
     if (pieceIdx >= pieces.Count)
         return true;
 
-    // Count empty cells for pruning
     int emptyCount = 0;
     for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
@@ -166,13 +184,11 @@ bool TryPlace(bool[,] grid, int width, int height, List<int> pieces, int pieceId
     int shapeIdx = pieces[pieceIdx];
     var orientations = allOrientations[shapeIdx];
 
-    // Pre-compute bounding boxes for each orientation
     foreach (var orientation in orientations)
     {
         int maxX = orientation.Max(c => c.x);
         int maxY = orientation.Max(c => c.y);
 
-        // Try each position where this orientation fits
         for (int py = 0; py <= height - maxY - 1; py++)
         {
             for (int px = 0; px <= width - maxX - 1; px++)

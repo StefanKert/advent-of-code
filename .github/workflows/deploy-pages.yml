@@ -1,10 +1,17 @@
-name: Deploy Day1 WASM Demo to GitHub Pages
+name: Deploy Advent of Code 2025 Calendar to GitHub Pages
 
 on:
   push:
+    branches: ["main", "master", "claude/*"]
+    paths:
+      - '2025/src/Day*/**'
+      - '2025/src/advent-of-code-calendar/**'
+      - '.github/workflows/deploy-pages.yml'
+  pull_request:
     branches: ["main", "master"]
     paths:
-      - '2025/src/Day1.Wasm/demo-app/**'
+      - '2025/src/Day*/**'
+      - '2025/src/advent-of-code-calendar/**'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
@@ -18,8 +25,61 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  # Build all day projects in parallel using matrix strategy
+  build-wasm:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        day: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build Day ${{ matrix.day }}
+        run: |
+          DAY_DIR="2025/src/Day${{ matrix.day }}"
+          DAY_PADDED=$(printf "%02d" ${{ matrix.day }})
+
+          if [ -d "$DAY_DIR" ]; then
+            echo "Building Day ${{ matrix.day }}..."
+            dotnet publish "$DAY_DIR" -c Release
+
+            # WASM file is generated in bin/Release
+            echo "Searching for WASM file in $DAY_DIR..."
+            find "$DAY_DIR" -name "*.wasm" -type f
+
+            WASM_FILE=$(find "$DAY_DIR" -name "*.wasm" -type f | head -1)
+            if [ -n "$WASM_FILE" ]; then
+              echo "Found WASM: $WASM_FILE"
+              mkdir -p wasm-output
+              cp "$WASM_FILE" "wasm-output/day${DAY_PADDED}.wasm"
+              echo "Day ${{ matrix.day }} built successfully"
+            else
+              echo "ERROR: No WASM file found for Day ${{ matrix.day }}"
+              exit 1
+            fi
+          else
+            echo "ERROR: Directory $DAY_DIR not found"
+            exit 1
+          fi
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-day-${{ matrix.day }}
+          path: wasm-output/
+          retention-days: 1
+
+  # Combine all WASM files and build the web app
+  build-webapp:
+    runs-on: ubuntu-latest
+    needs: build-wasm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,15 +88,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 2025/src/Day1.Wasm/demo-app/package-lock.json
 
-      - name: Install dependencies
-        working-directory: 2025/src/Day1.Wasm/demo-app
-        run: npm ci
+      - name: Download all WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wasm-day-*
+          path: 2025/src/advent-of-code-calendar/public/wasm
+          merge-multiple: true
 
-      - name: Build for production
-        working-directory: 2025/src/Day1.Wasm/demo-app
+      - name: List WASM files
+        run: |
+          echo "=== WASM files ==="
+          ls -la 2025/src/advent-of-code-calendar/public/wasm/
+
+      - name: Install app dependencies
+        working-directory: 2025/src/advent-of-code-calendar
+        run: npm install
+
+      - name: Build app for production
+        working-directory: 2025/src/advent-of-code-calendar
         run: npm run build:pages
         env:
           BASE_URL: /advent-of-code/
@@ -44,17 +114,24 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload artifact
+      - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 2025/src/Day1.Wasm/demo-app/dist
+          path: 2025/src/advent-of-code-calendar/dist
+
+      - name: Upload WASM-only artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-files
+          path: 2025/src/advent-of-code-calendar/public/wasm/
+          retention-days: 90
 
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-webapp
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

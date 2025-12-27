@@ -1,71 +1,101 @@
-var coordinates = File.ReadAllLines("input.txt")
+// Support both file input and WASM (stdin/env) input
+string[] lines;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
+{
+    lines = aocInput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else if (Console.IsInputRedirected)
+{
+    lines = Console.In.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else
+{
+    lines = File.ReadAllLines("input.txt");
+}
+
+var coordinates = lines
     .Select(x => {
         var parts = x.Split(',');
         return (x: long.Parse(parts[0]), y: long.Parse(parts[1]));
     })
     .ToList();
 
-// Part 1: Find largest rectangle between any two red tiles
-long maxArea1 = 0;
-for (int i = 0; i < coordinates.Count; i++)
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
 {
-    for (int j = i + 1; j < coordinates.Count; j++)
-    {
-        var p1 = coordinates[i];
-        var p2 = coordinates[j];
-        long width = Math.Abs(p1.x - p2.x) + 1;
-        long height = Math.Abs(p1.y - p2.y) + 1;
-        maxArea1 = Math.Max(maxArea1, width * height);
-    }
+    Console.WriteLine(Solution1(coordinates));
 }
-Console.WriteLine($"Part 1: {maxArea1}");
-
-// Part 2: Find largest rectangle inside the polygon
-// Build polygon edges (connecting consecutive red tiles)
-var edges = new List<((long x, long y) from, (long x, long y) to)>();
-for (int i = 0; i < coordinates.Count; i++)
+else if (partStr == "2")
 {
-    int next = (i + 1) % coordinates.Count;
-    edges.Add((coordinates[i], coordinates[next]));
+    Console.WriteLine(Solution2(coordinates));
+}
+else
+{
+    Console.WriteLine("Part 1: " + Solution1(coordinates));
+    Console.WriteLine("Part 2: " + Solution2(coordinates));
 }
 
-long maxArea2 = 0;
-for (int i = 0; i < coordinates.Count; i++)
+static long Solution1(List<(long x, long y)> coordinates)
 {
-    for (int j = i + 1; j < coordinates.Count; j++)
+    long maxArea1 = 0;
+    for (int i = 0; i < coordinates.Count; i++)
     {
-        var p1 = coordinates[i];
-        var p2 = coordinates[j];
-
-        long left = Math.Min(p1.x, p2.x);
-        long right = Math.Max(p1.x, p2.x);
-        long bottom = Math.Min(p1.y, p2.y);
-        long top = Math.Max(p1.y, p2.y);
-
-        if (IsRectangleInside(left, right, bottom, top, coordinates, edges))
+        for (int j = i + 1; j < coordinates.Count; j++)
         {
-            long width = right - left + 1;
-            long height = top - bottom + 1;
-            maxArea2 = Math.Max(maxArea2, width * height);
+            var p1 = coordinates[i];
+            var p2 = coordinates[j];
+            long width = Math.Abs(p1.x - p2.x) + 1;
+            long height = Math.Abs(p1.y - p2.y) + 1;
+            maxArea1 = Math.Max(maxArea1, width * height);
         }
     }
+    return maxArea1;
 }
-Console.WriteLine($"Part 2: {maxArea2}");
+
+static long Solution2(List<(long x, long y)> coordinates)
+{
+    var edges = new List<((long x, long y) from, (long x, long y) to)>();
+    for (int i = 0; i < coordinates.Count; i++)
+    {
+        int next = (i + 1) % coordinates.Count;
+        edges.Add((coordinates[i], coordinates[next]));
+    }
+
+    long maxArea2 = 0;
+    for (int i = 0; i < coordinates.Count; i++)
+    {
+        for (int j = i + 1; j < coordinates.Count; j++)
+        {
+            var p1 = coordinates[i];
+            var p2 = coordinates[j];
+
+            long left = Math.Min(p1.x, p2.x);
+            long right = Math.Max(p1.x, p2.x);
+            long bottom = Math.Min(p1.y, p2.y);
+            long top = Math.Max(p1.y, p2.y);
+
+            if (IsRectangleInside(left, right, bottom, top, coordinates, edges))
+            {
+                long width = right - left + 1;
+                long height = top - bottom + 1;
+                maxArea2 = Math.Max(maxArea2, width * height);
+            }
+        }
+    }
+    return maxArea2;
+}
 
 static bool IsRectangleInside(long left, long right, long bottom, long top,
                                List<(long x, long y)> polygon,
                                List<((long x, long y) from, (long x, long y) to)> edges)
 {
-    // Check if any edge passes through the rectangle interior
-    // If so, the rectangle crosses the polygon boundary
     foreach (var edge in edges)
     {
         if (EdgeCrossesRectangleInterior(edge, left, right, bottom, top))
             return false;
     }
 
-    // Check if a point inside the rectangle is inside the polygon
-    // Use center + 0.5 to avoid landing exactly on integer grid lines
     double centerX = (left + right) / 2.0 + 0.5;
     double centerY = (bottom + top) / 2.0 + 0.5;
 
@@ -77,29 +107,26 @@ static bool EdgeCrossesRectangleInterior(((long x, long y) from, (long x, long y
 {
     var (from, to) = edge;
 
-    if (from.y == to.y)  // Horizontal edge
+    if (from.y == to.y)
     {
         long y = from.y;
         long x1 = Math.Min(from.x, to.x);
         long x2 = Math.Max(from.x, to.x);
 
-        // Edge crosses interior if: y is strictly inside AND x ranges overlap
         return y > bottom && y < top && x1 < right && x2 > left;
     }
-    else  // Vertical edge
+    else
     {
         long x = from.x;
         long y1 = Math.Min(from.y, to.y);
         long y2 = Math.Max(from.y, to.y);
 
-        // Edge crosses interior if: x is strictly inside AND y ranges overlap
         return x > left && x < right && y1 < top && y2 > bottom;
     }
 }
 
 static bool IsPointInPolygon(double x, double y, List<(long x, long y)> polygon)
 {
-    // Ray casting algorithm
     bool inside = false;
     int n = polygon.Count;
 
