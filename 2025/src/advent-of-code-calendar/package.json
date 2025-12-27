@@ -9,6 +9,9 @@
     "build:pages": "vite build",
     "preview": "vite preview"
   },
+  "dependencies": {
+    "@runno/wasi": "^0.10.0"
+  },
   "devDependencies": {
     "vite": "^5.4.0"
   }

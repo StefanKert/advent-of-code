@@ -1,4 +1,4 @@
-import { runWasiModule } from '../lib/wasi-shim.js';
+import { WASI } from '@runno/wasi';
 
 // Day information with demo inputs
 export const dayInfo = {
@@ -70,6 +70,32 @@ function getWasmUrl(day) {
     return `./wasm/day${dayStr}.wasm`;
 }
 
+// Run a WASI module with the given environment
+async function runWasiModule(wasmUrl, env = {}) {
+    const response = await fetch(wasmUrl);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch ${wasmUrl}: ${response.status}`);
+    }
+    const wasmBytes = await response.arrayBuffer();
+
+    // Create WASI instance with environment variables
+    const wasi = new WASI({
+        args: [],
+        env: env,
+        stdout: (out) => { /* collected below */ },
+        stderr: (err) => { console.error('WASM stderr:', err); },
+    });
+
+    const { instance } = await WebAssembly.instantiate(wasmBytes, {
+        wasi_snapshot_preview1: wasi.imports,
+    });
+
+    // Run the module and capture stdout
+    const result = await wasi.start(instance);
+
+    return result.stdout || '';
+}
+
 // Run a specific day's solver
 async function runDaySolver(day, part, input) {
     const wasmUrl = getWasmUrl(day);
@@ -79,7 +105,7 @@ async function runDaySolver(day, part, input) {
             AOC_PART: part.toString(),
             AOC_INPUT: input
         });
-        return output || 'No output';
+        return output.trim() || 'No output';
     } catch (e) {
         console.error(`Error running Day ${day}:`, e);
         return `Error: ${e.message}`;
