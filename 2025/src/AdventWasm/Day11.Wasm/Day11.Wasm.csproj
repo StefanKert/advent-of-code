@@ -6,6 +6,7 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>Day11</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

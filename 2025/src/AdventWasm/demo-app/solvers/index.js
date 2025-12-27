@@ -3,27 +3,27 @@ export const dayInfo = {
     1: {
         title: 'Rotation Counter',
         description: 'Count passes through position zero on a circular dial.',
-        demo: 'D:10\nD:50\nU:30\nD:20\nD:15'
+        demo: 'L10\nR50\nL30\nR20\nL15'
     },
     2: {
         title: 'ID Validation',
         description: 'Find invalid IDs based on palindrome and repeat patterns.',
-        demo: 'ABC123CBA123\nXYZ456ZYX789\nAAA111AAA111\nDEF123FED456'
+        demo: '123123-123130'
     },
     3: {
         title: 'Battery Aggregation',
         description: 'Aggregate battery values recursively to find maximum.',
-        demo: '10 20 30\n5 15 25\n8 12 18'
+        demo: '123456789\n987654321\n135792468'
     },
     4: {
         title: 'Paper Roll Detection',
         description: 'Count rolls with specific neighbor patterns.',
-        demo: '###...\n..###.\n.#.#.#'
+        demo: '@@@...\n..@@@.\n.@.@.@'
     },
     5: {
         title: 'Range Merging',
         description: 'Merge overlapping ranges and validate IDs.',
-        demo: '1-5\n3-8\n10-15\n12-20'
+        demo: '1-5\n3-8\n10-15\n\n4\n7\n12\n20'
     },
     6: {
         title: 'Operator Aggregation',
@@ -41,92 +41,93 @@ export const dayInfo = {
         demo: '0,0,0\n1,1,1\n10,10,10\n11,11,11\n100,100,100'
     },
     9: {
-        title: '2D Distance Calculation',
-        description: 'Find largest distance pair and calculate bounding box area.',
-        demo: '0,0\n5,5\n10,0\n5,-5'
+        title: 'Polygon Rectangle',
+        description: 'Find largest rectangles between coordinates and inside polygons.',
+        demo: '0,0\n10,0\n10,10\n0,10'
     },
     10: {
-        title: 'Beam Tree Traversal',
-        description: 'Walk beam paths through a map, counting splits and distinct paths.',
-        demo: '...S...\n.......\n...^...\n.......\n..^.^..'
+        title: 'Button Puzzle',
+        description: 'Find minimum button presses to match light patterns.',
+        demo: '[##..](0,1)(2,3){1,1,0,0}'
     },
     11: {
-        title: 'Dependency Chain Traversal',
-        description: 'Walk dependency chains and count paths to out with optional filtering.',
+        title: 'Dependency Chain',
+        description: 'Walk dependency chains and count paths.',
         demo: 'start: you next\nnext: dac fft\ndac: out\nfft: out'
     },
     12: {
         title: 'Shape Packing',
         description: 'Check if shapes fit in regions based on occupied squares.',
-        demo: '###\n.#.\n.#.\n\n10x10: 1 0 0 0 0 0'
+        demo: '0:\n###\n.#.\n\n5x5: 1'
     }
 };
 
-// WASM module runner
-let wasmModule = null;
-let wasmRun = null;
+// Cache for loaded WASM modules
+const wasmModules = {};
 
-// Try to load the WASM module dynamically
-async function loadWasmSolver() {
+// Load a specific day's WASM module
+async function loadDayWasm(day) {
+    const dayStr = day.toString().padStart(2, '0');
+
+    if (wasmModules[day]) {
+        return wasmModules[day];
+    }
+
     try {
-        // Import the jco-transpiled module
-        const module = await import('./advent/advent.js');
-        wasmModule = module;
-        wasmRun = module.run || module.default;
-        console.log('WASM solver loaded successfully', Object.keys(module));
-        return true;
+        // Import the transpiled module for this specific day
+        const module = await import(`../wasm/day${dayStr}/day${dayStr}.js`);
+        wasmModules[day] = module;
+        console.log(`Day ${day} WASM loaded successfully`);
+        return module;
     } catch (e) {
-        console.warn('WASM solver not available:', e.message);
-        return false;
+        console.warn(`Day ${day} WASM not available:`, e.message);
+        return null;
     }
 }
 
-// Run the WASM solver
-async function runSolver(day, part, input) {
-    if (!wasmModule) {
-        await loadWasmSolver();
-    }
+// Run a specific day's solver
+async function runDaySolver(day, part, input) {
+    const module = await loadDayWasm(day);
 
-    if (!wasmModule) {
-        return 'WASM module not loaded - build the C# project first';
+    if (!module) {
+        return `Day ${day} WASM module not loaded - build the project first`;
     }
 
     try {
-        // For jco-transpiled WASI modules, we need to set up stdin/stdout/env
         let output = '';
 
-        // Check what exports are available
-        if (wasmRun) {
-            // Run as a command with args
-            const result = await wasmRun({
-                args: ['solver', day.toString(), part.toString()],
+        // Get the run function from the module
+        const run = module.run || module.default;
+
+        if (run) {
+            await run({
+                args: ['solver', part.toString()],
                 env: {
-                    AOC_DAY: day.toString(),
                     AOC_PART: part.toString(),
                     AOC_INPUT: input
                 },
                 stdin: input,
                 stdout: (data) => { output += data; },
-                stderr: (data) => { console.error('WASM stderr:', data); }
+                stderr: (data) => { console.error(`Day ${day} stderr:`, data); }
             });
             return output.trim() || 'No output';
         } else {
             return 'WASM run function not found';
         }
     } catch (e) {
-        console.error('Error running WASM:', e);
+        console.error(`Error running Day ${day}:`, e);
         return `Error: ${e.message}`;
     }
 }
 
-// Solver wrapper
+// Create solver wrapper for a specific day
 function createSolver(day) {
     return {
         async solvePart1(input) {
-            return await runSolver(day, 1, input);
+            return await runDaySolver(day, 1, input);
         },
         async solvePart2(input) {
-            return await runSolver(day, 2, input);
+            return await runDaySolver(day, 2, input);
         }
     };
 }
@@ -148,8 +149,8 @@ export const solvers = {
 };
 
 // Export utilities
-export function isWasmLoaded() {
-    return wasmModule !== null;
+export function isWasmLoaded(day) {
+    return !!wasmModules[day];
 }
 
-export { loadWasmSolver };
+export { loadDayWasm };
