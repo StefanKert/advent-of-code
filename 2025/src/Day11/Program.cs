@@ -1,10 +1,40 @@
-﻿var lines = File.ReadAllLines("input.txt").ToDictionary(line => line.Split(':')[0], line => line.Split(':')[1].Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList());
+// Support both file input and WASM (stdin/env) input
+string[] lines;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
+{
+    lines = aocInput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else if (Console.IsInputRedirected)
+{
+    lines = Console.In.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else
+{
+    lines = File.ReadAllLines("input.txt");
+}
 
-var chains = WalkChain(lines, lines.First(x => x.Value.Contains("you")).Value.First(x => x == "you"), false, false, new Dictionary<(string name, bool dac, bool fft), long>());
-Console.WriteLine("Solution 1: " + chains);
+var linesDict = lines.ToDictionary(line => line.Split(':')[0], line => line.Split(':')[1].Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList());
 
-chains = WalkChain(lines, "svr", false, false, new Dictionary<(string name, bool dac, bool fft), long>(), true);
-Console.WriteLine("Solution 2: " + chains);
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
+{
+    var chains = WalkChain(linesDict, linesDict.First(x => x.Value.Contains("you")).Value.First(x => x == "you"), false, false, new Dictionary<(string name, bool dac, bool fft), long>());
+    Console.WriteLine(chains);
+}
+else if (partStr == "2")
+{
+    var chains = WalkChain(linesDict, "svr", false, false, new Dictionary<(string name, bool dac, bool fft), long>(), true);
+    Console.WriteLine(chains);
+}
+else
+{
+    var chains = WalkChain(linesDict, linesDict.First(x => x.Value.Contains("you")).Value.First(x => x == "you"), false, false, new Dictionary<(string name, bool dac, bool fft), long>());
+    Console.WriteLine("Solution 1: " + chains);
+
+    chains = WalkChain(linesDict, "svr", false, false, new Dictionary<(string name, bool dac, bool fft), long>(), true);
+    Console.WriteLine("Solution 2: " + chains);
+}
 
 static long WalkChain(Dictionary<string, List<string>> lines, string currentLabel, bool containsDac, bool containsFft,
         Dictionary<(string name, bool dac, bool fft), long> cache, bool filter = false)

@@ -1,17 +1,40 @@
-﻿using System.Runtime.CompilerServices;
-
-// Solution1();
-Solution2();
-
-static void Solution1()
+// Support both file input and WASM (stdin/env) input
+string[] inputLines;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
 {
-    var ranges = File.ReadAllLines("input.txt")
+    inputLines = aocInput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else if (Console.IsInputRedirected)
+{
+    inputLines = Console.In.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else
+{
+    inputLines = File.ReadAllLines("input.txt");
+}
+
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
+{
+    Console.WriteLine(Solution1(inputLines));
+}
+else if (partStr == "2")
+{
+    Console.WriteLine(Solution2(inputLines));
+}
+else
+{
+    Console.WriteLine("Solution 1: Sum of invalid IDs: " + Solution1(inputLines));
+    Console.WriteLine("Solution 2: Sum of invalid IDs: " + Solution2(inputLines));
+}
+
+static long Solution1(string[] inputLines)
+{
+    var ranges = inputLines
         .SelectMany(line => line.Split(',', StringSplitOptions.RemoveEmptyEntries))
         .Select(part => part.Split('-').Select(long.Parse).ToArray())
-        .Select(r => (
-            Start: r[0],
-            End: r[1]
-        ));
+        .Select(r => (Start: r[0], End: r[1]));
 
     var numbers = new List<string>();
     foreach (var line in ranges)
@@ -37,19 +60,15 @@ static void Solution1()
             }
         }
     }
-    Console.WriteLine("Solution 1: Sum of invalid IDs: " + invalidIds.Sum());
+    return invalidIds.Sum();
 }
 
-
-static void Solution2()
+static long Solution2(string[] inputLines)
 {
-    var ranges = File.ReadAllLines("input.txt")
+    var ranges = inputLines
         .SelectMany(line => line.Split(',', StringSplitOptions.RemoveEmptyEntries))
         .Select(part => part.Split('-').Select(long.Parse).ToArray())
-        .Select(r => (
-            Start: r[0],
-            End: r[1]
-        ));
+        .Select(r => (Start: r[0], End: r[1]));
 
     var numbers = new List<string>();
     foreach (var line in ranges)
@@ -68,20 +87,14 @@ static void Solution2()
             invalidIds.Add(long.Parse(numbers[i]));
         }
     }
-    Console.WriteLine("Solution 2: Sum of invalid IDs: " + invalidIds.Sum());
-
-
+    return invalidIds.Sum();
 }
 
 static bool IsPattern(List<string> numbers, int i)
 {
     foreach (var combination in Combinations(numbers[i]))
     {
-        if (!IsOnlyPattern(numbers[i], combination))
-        {
-            continue;
-        }
-        else
+        if (IsOnlyPattern(numbers[i], combination))
         {
             return true;
         }
@@ -93,7 +106,7 @@ static List<string> Combinations(string input)
 {
     var result = new List<string>();
     var temp = "";
-    for(int i = 0; i < input.Length / 2; i++)
+    for (int i = 0; i < input.Length / 2; i++)
     {
         temp += input[i];
         result.Add(temp);
@@ -103,22 +116,12 @@ static List<string> Combinations(string input)
 
 static bool IsOnlyPattern(string input, string pattern)
 {
-    for(int i = 0; i < input.Length; i++)
+    for (int i = 0; i < input.Length; i++)
     {
-        if(i + pattern.Length > input.Length)
-        {
-            return false;
-        }
-
+        if (i + pattern.Length > input.Length) return false;
         var part = input.Substring(i, pattern.Length);
-        if(part != pattern)
-        {
-            return false;
-        }
-        else
-        {
-            i += pattern.Length - 1;
-        }
+        if (part != pattern) return false;
+        i += pattern.Length - 1;
     }
     return true;
 }

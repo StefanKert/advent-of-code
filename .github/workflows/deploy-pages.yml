@@ -4,12 +4,14 @@ on:
   push:
     branches: ["main", "master"]
     paths:
-      - '2025/src/AdventWasm/**'
+      - '2025/src/Day*/**'
+      - '2025/src/AdventWasm/demo-app/**'
       - '.github/workflows/deploy-pages.yml'
   pull_request:
     branches: ["main", "master"]
     paths:
-      - '2025/src/AdventWasm/**'
+      - '2025/src/Day*/**'
+      - '2025/src/AdventWasm/demo-app/**'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
@@ -46,8 +48,9 @@ jobs:
         run: |
           mkdir -p 2025/src/AdventWasm/demo-app/wasm
 
-          for day in 01 02 03 04 05 06 07 08 09 10 11 12; do
-            DAY_DIR="2025/src/AdventWasm/Day${day}.Wasm"
+          for day in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            DAY_DIR="2025/src/Day${day}"
+            DAY_PADDED=$(printf "%02d" $day)
             if [ -d "$DAY_DIR" ]; then
               echo "=========================================="
               echo "Building Day ${day}..."
@@ -58,7 +61,7 @@ jobs:
               WASM_FILE=$(find publish -name "*.wasm" | head -1)
               if [ -n "$WASM_FILE" ]; then
                 echo "Transpiling $WASM_FILE..."
-                jco transpile "$WASM_FILE" -o "../demo-app/wasm/day${day}" --name "day${day}"
+                jco transpile "$WASM_FILE" -o "../../AdventWasm/demo-app/wasm/day${DAY_PADDED}" --name "day${DAY_PADDED}"
                 echo "Day ${day} transpiled successfully"
               else
                 echo "WARNING: No WASM file found for Day ${day}"

@@ -1,4 +1,18 @@
-﻿var lines = File.ReadAllLines("input.txt");
+// Support both file input and WASM (stdin/env) input
+string[] lines;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
+{
+    lines = aocInput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else if (Console.IsInputRedirected)
+{
+    lines = Console.In.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else
+{
+    lines = File.ReadAllLines("input.txt");
+}
 
 var height = lines.Length;
 var width = lines[0].Length;
@@ -6,22 +20,20 @@ var width = lines[0].Length;
 var map = lines.SelectMany(line => line.ToCharArray().ToList()).ToList();
 var startingPoint = map.IndexOf('S');
 var memo = new Dictionary<(int x, int row), long>();
-//Solution1(height, width, map, startingPoint);
-Solution2(height, width, map, startingPoint);
 
-void PrintMap(List<char> map, int width, int height)
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
 {
-    var result = new System.Text.StringBuilder();
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            result.Append(map[Index(x, y)]);
-        }
-        result.AppendLine();
-    }
-    Console.Clear();
-    Console.WriteLine(result.ToString());
+    Console.WriteLine(Solution1(height, width, new List<char>(map), startingPoint));
+}
+else if (partStr == "2")
+{
+    Console.WriteLine(Solution2(height, width, map, startingPoint));
+}
+else
+{
+    Console.WriteLine("Solution 1: " + Solution1(height, width, new List<char>(map), startingPoint));
+    Console.WriteLine("Solution 2: " + Solution2(height, width, map, startingPoint));
 }
 
 int Index(int x, int y) => y * width + x;
@@ -29,10 +41,9 @@ int Index(int x, int y) => y * width + x;
 bool InBounds(int x, int y, int width, int height) =>
     x >= 0 && y >= 0 && x < width && y < height;
 
-void Solution1(int height, int width, List<char> map, int startingPoint)
+long Solution1(int height, int width, List<char> map, int startingPoint)
 {
     var currentRow = 1;
-    // since we always know the row we can only store the beam location
     var beams = new List<int>();
     map[Index(startingPoint, currentRow)] = '|';
     beams.Add(startingPoint);
@@ -46,47 +57,41 @@ void Solution1(int height, int width, List<char> map, int startingPoint)
         {
             if (map[Index(beam, currentRow)] == '.')
             {
-                map[Index(beam, currentRow)] = '|'; // Continue the beam downwards
+                map[Index(beam, currentRow)] = '|';
                 nextBeams.Add(beam);
-                // in this case we can keep the beam
             }
             else if (map[Index(beam, currentRow)] == '^')
             {
-                // In this case we split it
                 if (InBounds(beam - 1, currentRow, width, height))
                 {
-                    map[Index(beam - 1, currentRow)] = '|'; // Continue the beam downwards
+                    map[Index(beam - 1, currentRow)] = '|';
                     nextBeams.Add(beam - 1);
                 }
 
                 if (InBounds(beam + 1, currentRow, width, height))
                 {
-                    map[Index(beam + 1, currentRow)] = '|'; // Continue the beam downwards
+                    map[Index(beam + 1, currentRow)] = '|';
                     nextBeams.Add(beam + 1);
                 }
                 splitCounter++;
             }
             else
             {
-                map[Index(beam, currentRow)] = '|'; // Continue the beam downwards
+                map[Index(beam, currentRow)] = '|';
             }
         }
-        PrintMap(map, width, height);
         beams = nextBeams;
     }
-    Console.WriteLine($"Starting Point: {splitCounter}");
+    return splitCounter;
 }
 
-
-void Solution2(int height, int width, List<char> map, int startingPoint)
+long Solution2(int height, int width, List<char> map, int startingPoint)
 {
     var currentRow = 1;
-    // since we always know the row we can only store the beam location
     var beams = new List<int>();
     map[Index(startingPoint, currentRow)] = '|';
 
-    var splitCounter = WalkCount(height, width, map, startingPoint, currentRow);
-    Console.WriteLine($"Starting Point: {splitCounter}");
+    return WalkCount(height, width, map, startingPoint, currentRow);
 }
 
 long WalkCount(int height, int width, IReadOnlyList<char> map, int x, int row)

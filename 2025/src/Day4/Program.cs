@@ -1,10 +1,37 @@
-﻿List<List<char>> matrix = File.ReadAllLines("input.txt")
+// Support both file input and WASM (stdin/env) input
+string[] lines;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
+{
+    lines = aocInput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else if (Console.IsInputRedirected)
+{
+    lines = Console.In.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else
+{
+    lines = File.ReadAllLines("input.txt");
+}
+
+List<List<char>> matrix = lines
     .Select(line => line.ToCharArray().ToList())
     .ToList();
 
-
-Solution1(matrix);
-Solution2(matrix);
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
+{
+    Console.WriteLine(Solution1(matrix));
+}
+else if (partStr == "2")
+{
+    Console.WriteLine(Solution2(matrix));
+}
+else
+{
+    Console.WriteLine("Solution 1: " + Solution1(matrix));
+    Console.WriteLine("Solution 2: " + Solution2(matrix));
+}
 
 static List<Point> GetNeighbours(int x, int y, List<List<char>> matrix)
 {
@@ -27,10 +54,9 @@ static List<Point> GetNeighbours(int x, int y, List<List<char>> matrix)
     return neighbours;
 }
 
-static void Solution1(List<List<char>> matrix)
+static int Solution1(List<List<char>> matrix)
 {
     var validPoints = new List<Point>();
-    var invalidPoints = new List<Point>();
 
     for (var i = 0; i < matrix.Count; i++)
     {
@@ -46,10 +72,10 @@ static void Solution1(List<List<char>> matrix)
             }
         }
     }
-    Console.WriteLine(validPoints.Count);
+    return validPoints.Count;
 }
 
-static void Solution2(List<List<char>> matrix)
+static int Solution2(List<List<char>> matrix)
 {
     int i = 0;
     int j = 0;
@@ -76,7 +102,7 @@ static void Solution2(List<List<char>> matrix)
         i++;
         j = 0;
     }
-    Console.WriteLine(validPoints.Count);
+    return validPoints.Count;
 }
 
 public record Point(int x, int y, char character);

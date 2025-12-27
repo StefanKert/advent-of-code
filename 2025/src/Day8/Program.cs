@@ -1,5 +1,20 @@
-﻿var junctionBoxes = File.ReadAllLines("input.txt").Select(x => (x: long.Parse(x.Split(",")[0]), y: long.Parse(x.Split(",")[1]), z: long.Parse(x.Split(",")[2]))).ToList();
-int iterations = 1000;
+// Support both file input and WASM (stdin/env) input
+string[] lines;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
+{
+    lines = aocInput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else if (Console.IsInputRedirected)
+{
+    lines = Console.In.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+else
+{
+    lines = File.ReadAllLines("input.txt");
+}
+
+var junctionBoxes = lines.Select(x => (x: long.Parse(x.Split(",")[0]), y: long.Parse(x.Split(",")[1]), z: long.Parse(x.Split(",")[2]))).ToList();
 var distances = CalculateDistances(junctionBoxes);
 
 (double distance, (long x, long y, long z) point1, (long x, long y, long z) point2) lastPoint = (0, (0, 0, 0), (0, 0, 0));
@@ -60,13 +75,25 @@ foreach (var point in distances.OrderBy(x => x.distance))
 
     if (junctionBoxes.Count == 0 && circuits.Count == 1)
     {
-        // in this case we reached the last point
         lastPoint = tempLastPoint;
     }
 }
 
-var result = circuits.OrderByDescending(x => x.Count).Take(3).Select(x => x.Count).Aggregate(1L, (a, b) => a * b);
-Console.WriteLine("Distance Last point: " + lastPoint.point1.x * lastPoint.point2.x);
+var result = lastPoint.point1.x * lastPoint.point2.x;
+
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
+{
+    Console.WriteLine(result);
+}
+else if (partStr == "2")
+{
+    Console.WriteLine(result);
+}
+else
+{
+    Console.WriteLine("Solution: " + result);
+}
 
 static double Distance3D(
     (long x, long y, long z) point1,

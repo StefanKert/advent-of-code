@@ -1,4 +1,35 @@
-﻿var inventory = ParseInventory("input.txt");
+// Support both file input and WASM (stdin/env) input
+string inputText;
+var aocInput = Environment.GetEnvironmentVariable("AOC_INPUT");
+if (!string.IsNullOrEmpty(aocInput))
+{
+    inputText = aocInput;
+}
+else if (Console.IsInputRedirected)
+{
+    inputText = Console.In.ReadToEnd();
+}
+else
+{
+    inputText = File.ReadAllText("input.txt");
+}
+
+var inventory = ParseInventory(inputText);
+
+var partStr = Environment.GetEnvironmentVariable("AOC_PART");
+if (partStr == "1")
+{
+    Console.WriteLine(Solution1(inventory));
+}
+else if (partStr == "2")
+{
+    Console.WriteLine(Solution2(inventory));
+}
+else
+{
+    Console.WriteLine("Solution 1: " + Solution1(inventory));
+    Console.WriteLine("Solution 2: " + Solution2(inventory));
+}
 
 static bool MergeRanges(List<Range> ranges)
 {
@@ -26,25 +57,16 @@ static bool MergeRanges(List<Range> ranges)
     return false;
 }
 
-Solution1(inventory);
-Solution2(inventory);
-
-// Solution1(matrix);
-// Solution2(matrix);
-
-
-Inventory ParseInventory(string file)
+Inventory ParseInventory(string text)
 {
-    var data = File.ReadAllText(file).Split(Environment.NewLine + Environment.NewLine);
-    var ranges = data[0].Split(Environment.NewLine).Select(x => new Range(fromInclusive: long.Parse(x.Split("-")[0]), toInclusive: long.Parse(x.Split("-")[1]))).OrderBy(x => x.fromInclusive).ToList();
-    var ids = data[1].Split(Environment.NewLine).Select(long.Parse).ToList();
-    Console.WriteLine($"Loaded {ranges.Count} ranges and {ids.Count} ids");
+    var data = text.Replace("\r\n", "\n").Split("\n\n");
+    var ranges = data[0].Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(x => new Range(fromInclusive: long.Parse(x.Split("-")[0]), toInclusive: long.Parse(x.Split("-")[1]))).OrderBy(x => x.fromInclusive).ToList();
+    var ids = data[1].Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(long.Parse).ToList();
     while (MergeRanges(ranges)) { }
-    Console.WriteLine($"Merged to {ranges.Count} ranges and {ids.Count} ids");
     return new Inventory(ranges, ids);
 }
 
-static void Solution1(Inventory inventory)
+static long Solution1(Inventory inventory)
 {
     var freshItems = new List<long>();
     foreach (var number in inventory.ids)
@@ -55,17 +77,17 @@ static void Solution1(Inventory inventory)
             freshItems.Add(number);
         }
     }
-    Console.WriteLine(freshItems.Count);
+    return freshItems.Count;
 }
 
-static void Solution2(Inventory inventory)
+static long Solution2(Inventory inventory)
 {
     var counter = 0L;
     foreach (var range in inventory.freshIds.Where(x => x.fromInclusive > 0))
     {
         counter += range.toInclusive - range.fromInclusive + 1;
     }
-    Console.WriteLine(counter);
+    return counter;
 }
 
 public record Inventory(List<Range> freshIds, List<long> ids);
