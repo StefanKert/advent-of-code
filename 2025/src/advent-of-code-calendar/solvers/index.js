@@ -1,4 +1,4 @@
-import { WASI, OpenFile, File, ConsoleStdout } from '@aspect/browser-wasi-shim';
+import { runWasiModule } from '../lib/wasi-shim.js';
 
 // Day information with demo inputs
 export const dayInfo = {
@@ -68,38 +68,6 @@ export const dayInfo = {
 function getWasmUrl(day) {
     const dayStr = day.toString().padStart(2, '0');
     return `./wasm/day${dayStr}.wasm`;
-}
-
-// Run a WASI module with the given environment
-async function runWasiModule(wasmUrl, env = {}) {
-    const response = await fetch(wasmUrl);
-    const wasmBytes = await response.arrayBuffer();
-
-    let stdout = '';
-
-    // Create WASI instance with environment variables
-    const wasi = new WASI([], Object.entries(env).map(([k, v]) => `${k}=${v}`), [
-        new OpenFile(new File([])), // stdin
-        ConsoleStdout.lineBuffered((line) => { stdout += line + '\n'; }),
-        ConsoleStdout.lineBuffered((line) => { console.error(line); }),
-    ]);
-
-    const { instance } = await WebAssembly.instantiate(wasmBytes, {
-        wasi_snapshot_preview1: wasi.wasiImport,
-    });
-
-    wasi.initialize(instance);
-
-    try {
-        instance.exports._start();
-    } catch (e) {
-        // proc_exit throws, which is expected
-        if (!e.message?.includes('exit')) {
-            throw e;
-        }
-    }
-
-    return stdout.trim();
 }
 
 // Run a specific day's solver
