@@ -2,179 +2,277 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advent of Code 2025 - WASM Solvers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>AoC 2025 WASM</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             color: #e0e0e0;
-            padding: 20px;
+            padding: 12px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 600px;
             margin: 0 auto;
         }
 
+        /* Header - compact on mobile */
         header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 16px;
+            padding: 8px 0;
         }
 
         h1 {
             color: #00ff88;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+            text-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
         }
 
         .subtitle {
             color: #888;
-            font-size: 1.1em;
+            font-size: 0.8rem;
         }
 
+        /* Cards */
         .card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
         }
 
         .card h2 {
             color: #ffcc00;
-            margin-bottom: 15px;
-            font-size: 1.3em;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card h3 {
             color: #00ff88;
-            margin-bottom: 10px;
-            margin-top: 20px;
-            font-size: 1.1em;
+            margin-bottom: 8px;
+            margin-top: 16px;
+            font-size: 0.9rem;
         }
 
-        .card h3:first-of-type {
-            margin-top: 0;
-        }
-
+        /* Day Selector - horizontal scroll on mobile */
         .day-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 0 12px 0;
+            margin: 0 -16px;
+            padding-left: 16px;
+            padding-right: 16px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .day-selector::-webkit-scrollbar {
+            display: none;
         }
 
         .day-btn {
+            flex-shrink: 0;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.2);
             color: #e0e0e0;
-            padding: 15px 10px;
-            border-radius: 8px;
-            font-size: 1em;
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            scroll-snap-align: start;
+            transition: all 0.2s ease;
         }
 
-        .day-btn:hover {
-            background: rgba(0, 255, 136, 0.2);
-            border-color: #00ff88;
+        .day-btn .day-num {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .day-btn:active {
+            transform: scale(0.95);
         }
 
         .day-btn.active {
             background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
             color: #1a1a2e;
             border-color: #00ff88;
-            font-weight: 600;
         }
 
         .day-btn.unavailable {
-            opacity: 0.4;
-            cursor: not-allowed;
+            opacity: 0.3;
+            pointer-events: none;
         }
 
+        /* Day title */
+        .day-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .day-badge {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #1a1a2e;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .day-title {
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .day-description {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+
+        /* Status */
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .status.loading {
+            background: rgba(255, 204, 0, 0.2);
+            border: 1px solid #ffcc00;
+            color: #ffcc00;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid rgba(0, 255, 136, 0.5);
+            color: #00ff88;
+        }
+
+        .status.error {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+        }
+
+        /* Textarea */
         textarea {
             width: 100%;
-            height: 200px;
+            height: 120px;
             background: #0d1117;
             border: 1px solid #30363d;
-            border-radius: 8px;
+            border-radius: 10px;
             color: #c9d1d9;
-            font-family: 'Consolas', 'Monaco', monospace;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
             font-size: 14px;
-            padding: 15px;
-            resize: vertical;
+            padding: 12px;
+            resize: none;
+            -webkit-appearance: none;
         }
 
         textarea:focus {
             outline: none;
             border-color: #00ff88;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.15);
         }
 
-        .button-group {
+        /* Buttons */
+        .button-stack {
             display: flex;
+            flex-direction: column;
             gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+            margin-top: 12px;
         }
 
         button {
             background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
             color: #1a1a2e;
             border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-size: 1em;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            width: 100%;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
-        }
-
-        button:disabled {
-            background: #444;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        button:active {
+            transform: scale(0.98);
+            opacity: 0.9;
         }
 
         button.secondary {
-            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         button.download {
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: #fff;
         }
 
-        button.download:hover {
-            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+        .button-row {
+            display: flex;
+            gap: 10px;
         }
 
-        .results {
-            margin-top: 20px;
+        .button-row button {
+            flex: 1;
         }
 
+        /* Results */
         .result-item {
             display: flex;
-            align-items: center;
-            padding: 15px;
+            flex-direction: column;
+            padding: 14px;
             background: rgba(0, 255, 136, 0.1);
-            border-radius: 8px;
+            border-radius: 10px;
             margin-bottom: 10px;
             border-left: 4px solid #00ff88;
         }
@@ -186,8 +284,11 @@
 
         .result-label {
             font-weight: 600;
-            min-width: 80px;
+            font-size: 0.75rem;
             color: #00ff88;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .result-item.part2 .result-label {
@@ -195,73 +296,92 @@
         }
 
         .result-value {
-            font-size: 1.3em;
+            font-size: 1.25rem;
             font-weight: 700;
-            font-family: 'Consolas', monospace;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
             word-break: break-all;
-        }
-
-        .status {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .status.loading {
-            background: rgba(255, 204, 0, 0.2);
-            border: 1px solid #ffcc00;
-            color: #ffcc00;
-        }
-
-        .status.success {
-            background: rgba(0, 255, 136, 0.2);
-            border: 1px solid #00ff88;
-            color: #00ff88;
-        }
-
-        .status.error {
-            background: rgba(255, 68, 68, 0.2);
-            border: 1px solid #ff4444;
-            color: #ff4444;
+            color: #fff;
         }
 
         .timing {
-            font-size: 0.85em;
+            font-size: 0.8rem;
             color: #888;
-            margin-top: 10px;
-        }
-
-        .day-description {
-            font-size: 0.9em;
-            color: #aaa;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-        }
-
-        .footer {
+            margin-top: 8px;
             text-align: center;
-            margin-top: 30px;
+        }
+
+        .empty-results {
             color: #666;
-            font-size: 0.9em;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
         }
 
-        .footer a {
+        /* Accordion for wasmtime instructions */
+        .accordion {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .accordion-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .accordion-item:last-child {
+            border-bottom: none;
+        }
+
+        .accordion-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #e0e0e0;
+            transition: background 0.2s ease;
+        }
+
+        .accordion-header:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .accordion-header::after {
+            content: '+';
+            font-size: 1.2rem;
             color: #00ff88;
-            text-decoration: none;
+            transition: transform 0.2s ease;
         }
 
+        .accordion-item.open .accordion-header::after {
+            content: '-';
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .accordion-item.open .accordion-content {
+            display: block;
+        }
+
+        /* Code blocks */
         .code-block {
             background: #0d1117;
             border: 1px solid #30363d;
             border-radius: 8px;
-            padding: 15px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 13px;
+            padding: 12px;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+            font-size: 11px;
             overflow-x: auto;
             margin: 10px 0;
             color: #c9d1d9;
+            -webkit-overflow-scrolling: touch;
         }
 
         .code-block code {
@@ -281,12 +401,13 @@
         }
 
         .instructions-list {
-            padding-left: 20px;
-            margin: 10px 0;
+            padding-left: 18px;
+            margin: 8px 0;
+            font-size: 0.85rem;
         }
 
         .instructions-list li {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             line-height: 1.5;
         }
 
@@ -295,59 +416,186 @@
             text-decoration: none;
         }
 
-        .instructions-list a:hover {
-            text-decoration: underline;
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 10px;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #888;
-            padding: 8px 16px;
-            font-size: 0.9em;
-        }
-
-        .tab-btn.active {
-            background: rgba(0, 255, 136, 0.2);
-            border-color: #00ff88;
-            color: #00ff88;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
+        /* Download section */
         .download-section {
-            margin-top: 20px;
-            padding-top: 20px;
+            margin-top: 16px;
+            padding-top: 16px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .download-info {
+        .file-info {
             display: flex;
             align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #888;
         }
 
         .file-name {
-            font-family: 'Consolas', monospace;
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
             background: rgba(0, 0, 0, 0.3);
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
             color: #58a6ff;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 16px;
+            color: #666;
+            font-size: 0.75rem;
+        }
+
+        .footer a {
+            color: #00ff88;
+            text-decoration: none;
+        }
+
+        /* Tablet and Desktop styles */
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 800px;
+            }
+
+            header {
+                margin-bottom: 24px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: 24px;
+                margin-bottom: 16px;
+            }
+
+            .day-selector {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 10px;
+                overflow-x: visible;
+                margin: 0;
+                padding: 0;
+            }
+
+            .day-btn {
+                width: auto;
+                height: 56px;
+            }
+
+            textarea {
+                height: 180px;
+            }
+
+            .button-stack {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .button-stack button {
+                width: auto;
+                flex: none;
+                padding: 14px 28px;
+            }
+
+            .button-row {
+                flex: none;
+            }
+
+            .result-item {
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .result-label {
+                min-width: 80px;
+                margin-bottom: 0;
+                margin-right: 16px;
+            }
+
+            .accordion {
+                display: none;
+            }
+
+            .desktop-tabs {
+                display: block;
+            }
+
+            .tab-buttons {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 16px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                padding-bottom: 12px;
+            }
+
+            .tab-btn {
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: #888;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                border-radius: 8px;
+                width: auto;
+                min-height: auto;
+            }
+
+            .tab-btn.active {
+                background: rgba(0, 255, 136, 0.2);
+                border-color: #00ff88;
+                color: #00ff88;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+        }
+
+        /* Hide desktop tabs on mobile */
+        .desktop-tabs {
+            display: none;
+        }
+
+        @media (min-width: 600px) {
+            .accordion {
+                display: none;
+            }
+
+            .desktop-tabs {
+                display: block;
+            }
+        }
+
+        /* Large desktop */
+        @media (min-width: 1000px) {
+            .container {
+                max-width: 900px;
+            }
+
+            .card {
+                padding: 28px;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
@@ -355,147 +603,175 @@
     <div class="container">
         <header>
             <h1>Advent of Code 2025</h1>
-            <p class="subtitle">C# WASM Plugin Demo - All Days</p>
+            <p class="subtitle">C# WASM Solvers</p>
         </header>
 
+        <!-- Day Selector -->
         <div class="card">
-            <h2>Select Day</h2>
             <div class="day-selector" id="daySelector">
                 <!-- Days will be populated by JS -->
             </div>
         </div>
 
+        <!-- Solver Card -->
         <div class="card">
-            <h2>Day <span id="currentDay">1</span>: <span id="dayTitle">Rotation Counter</span></h2>
+            <div class="day-header">
+                <span class="day-badge">Day <span id="currentDay">1</span></span>
+                <span class="day-title" id="dayTitle">Rotation Counter</span>
+            </div>
             <p class="day-description" id="dayDescription">Count passes through position zero on a circular dial.</p>
 
-            <div id="status" class="status success">
-                Ready to solve
-            </div>
+            <div id="status" class="status success">Ready to solve</div>
 
             <textarea id="input" placeholder="Paste your puzzle input here..."></textarea>
 
-            <div class="button-group">
+            <div class="button-stack">
                 <button id="solveBtn" onclick="solvePuzzle()">Solve Puzzle</button>
-                <button id="loadDemoBtn" class="secondary" onclick="loadDemoInput()">Load Demo Input</button>
+                <div class="button-row">
+                    <button class="secondary" onclick="loadDemoInput()">Demo</button>
+                    <button class="download" onclick="downloadWasm()">Download</button>
+                </div>
             </div>
 
-            <div class="download-section">
-                <div class="download-info">
-                    <button id="downloadBtn" class="download" onclick="downloadWasm()">Download WASM</button>
-                    <span class="file-name" id="wasmFileName">Day1.wasm</span>
-                </div>
+            <div class="file-info">
+                <span>WASM file:</span>
+                <span class="file-name" id="wasmFileName">Day1.wasm</span>
             </div>
         </div>
 
+        <!-- Results Card -->
         <div class="card">
             <h2>Results</h2>
-            <div id="results" class="results">
-                <p style="color: #888;">Select a day and run the solver to see results...</p>
+            <div id="results">
+                <p class="empty-results">Run the solver to see results</p>
             </div>
         </div>
 
+        <!-- Wasmtime Instructions - Accordion for mobile -->
         <div class="card">
-            <h2>Run Locally with Wasmtime</h2>
-            <p style="color: #aaa; margin-bottom: 15px;">
-                Download the WASM file above and run it locally using Wasmtime, a standalone WebAssembly runtime.
-            </p>
+            <h2>Run with Wasmtime</h2>
 
-            <div class="tab-buttons">
-                <button class="tab-btn active" onclick="showTab('install')">Installation</button>
-                <button class="tab-btn" onclick="showTab('usage')">Basic Usage</button>
-                <button class="tab-btn" onclick="showTab('advanced')">Advanced</button>
+            <!-- Mobile Accordion -->
+            <div class="accordion" id="mobileAccordion">
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">Installation</div>
+                    <div class="accordion-content">
+                        <p style="margin-bottom: 12px; font-size: 0.85rem;">Install Wasmtime to run WASM files locally:</p>
+                        <div class="code-block">
+                            <code><span class="comment"># Linux/macOS</span>
+<span class="command">curl</span> https://wasmtime.dev/install.sh <span class="flag">-sSf</span> | <span class="command">bash</span>
+
+<span class="comment"># Windows</span>
+<span class="command">winget</span> install BytecodeAlliance.Wasmtime</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">Basic Usage</div>
+                    <div class="accordion-content">
+                        <p style="margin-bottom: 12px; font-size: 0.85rem;">Run the solver with your input:</p>
+                        <div class="code-block">
+                            <code><span class="comment"># Run Part 1</span>
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 \
+  <span class="flag">--env</span> AOC_INPUT="input" <span id="codeWasmFile1">Day1.wasm</span>
+
+<span class="comment"># From file</span>
+<span class="command">cat</span> input.txt | <span class="command">wasmtime</span> \
+  <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile2">Day1.wasm</span></code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">Advanced</div>
+                    <div class="accordion-content">
+                        <p style="margin-bottom: 12px; font-size: 0.85rem;">Run both parts or measure performance:</p>
+                        <div class="code-block">
+                            <code><span class="comment"># Both parts</span>
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_INPUT="$(cat input.txt)" <span id="codeWasmFile3">Day1.wasm</span>
+
+<span class="comment"># With timing</span>
+<span class="command">time</span> <span class="command">wasmtime</span> <span class="flag">--optimize</span> \
+  <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile4">Day1.wasm</span> &lt; input.txt</code>
+                        </div>
+                        <p style="margin-top: 12px; font-size: 0.8rem; color: #888;">Also works with: Wasmer, wazero</p>
+                    </div>
+                </div>
             </div>
 
-            <div id="tab-install" class="tab-content active">
-                <h3>Install Wasmtime</h3>
-                <ol class="instructions-list">
-                    <li>
-                        <strong>Linux/macOS:</strong> Run this command in your terminal:
-                        <div class="code-block">
-                            <code><span class="command">curl</span> https://wasmtime.dev/install.sh <span class="flag">-sSf</span> | <span class="command">bash</span></code>
-                        </div>
-                    </li>
-                    <li>
-                        <strong>Windows:</strong> Download the installer from
-                        <a href="https://github.com/bytecodealliance/wasmtime/releases" target="_blank">GitHub Releases</a>
-                        or use:
-                        <div class="code-block">
-                            <code><span class="command">winget</span> install BytecodeAlliance.Wasmtime</code>
-                        </div>
-                    </li>
-                    <li>
-                        <strong>Verify installation:</strong>
-                        <div class="code-block">
-                            <code><span class="command">wasmtime</span> <span class="flag">--version</span></code>
-                        </div>
-                    </li>
-                </ol>
-            </div>
+            <!-- Desktop Tabs -->
+            <div class="desktop-tabs">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="showTab('install')">Installation</button>
+                    <button class="tab-btn" onclick="showTab('usage')">Basic Usage</button>
+                    <button class="tab-btn" onclick="showTab('advanced')">Advanced</button>
+                </div>
 
-            <div id="tab-usage" class="tab-content">
-                <h3>Running the Solver</h3>
-                <p style="margin-bottom: 15px;">After downloading the WASM file, run it with your puzzle input:</p>
+                <div id="tab-install" class="tab-content active">
+                    <h3>Install Wasmtime</h3>
+                    <ol class="instructions-list">
+                        <li>
+                            <strong>Linux/macOS:</strong>
+                            <div class="code-block">
+                                <code><span class="command">curl</span> https://wasmtime.dev/install.sh <span class="flag">-sSf</span> | <span class="command">bash</span></code>
+                            </div>
+                        </li>
+                        <li>
+                            <strong>Windows:</strong>
+                            <div class="code-block">
+                                <code><span class="command">winget</span> install BytecodeAlliance.Wasmtime</code>
+                            </div>
+                        </li>
+                        <li>
+                            <strong>Verify:</strong>
+                            <div class="code-block">
+                                <code><span class="command">wasmtime</span> <span class="flag">--version</span></code>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
 
-                <h3>Option 1: Using Environment Variables</h3>
-                <div class="code-block">
-                    <code><span class="comment"># Run Part 1</span>
-<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span class="flag">--env</span> AOC_INPUT="your input here" <span id="codeWasmFile1">Day1.wasm</span>
+                <div id="tab-usage" class="tab-content">
+                    <h3>Using Environment Variables</h3>
+                    <div class="code-block">
+                        <code><span class="comment"># Run Part 1</span>
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span class="flag">--env</span> AOC_INPUT="your input" <span id="codeWasmFile5">Day1.wasm</span>
 
 <span class="comment"># Run Part 2</span>
-<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=2 <span class="flag">--env</span> AOC_INPUT="your input here" <span id="codeWasmFile2">Day1.wasm</span></code>
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=2 <span class="flag">--env</span> AOC_INPUT="your input" <span id="codeWasmFile6">Day1.wasm</span></code>
+                    </div>
+
+                    <h3>Using File Input</h3>
+                    <div class="code-block">
+                        <code><span class="command">cat</span> input.txt | <span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile7">Day1.wasm</span>
+
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile8">Day1.wasm</span> &lt; input.txt</code>
+                    </div>
                 </div>
 
-                <h3>Option 2: Using File Input (stdin)</h3>
-                <div class="code-block">
-                    <code><span class="comment"># Pipe input from a file</span>
-<span class="command">cat</span> input.txt | <span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile3">Day1.wasm</span>
+                <div id="tab-advanced" class="tab-content">
+                    <h3>Run Both Parts</h3>
+                    <div class="code-block">
+                        <code><span class="command">wasmtime</span> <span class="flag">--env</span> AOC_INPUT="$(cat input.txt)" <span id="codeWasmFile9">Day1.wasm</span></code>
+                    </div>
 
-<span class="comment"># Or use input redirection</span>
-<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile4">Day1.wasm</span> &lt; input.txt</code>
+                    <h3>Performance</h3>
+                    <div class="code-block">
+                        <code><span class="command">time</span> <span class="command">wasmtime</span> <span class="flag">--optimize</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile10">Day1.wasm</span> &lt; input.txt</code>
+                    </div>
+
+                    <h3>Other Runtimes</h3>
+                    <ul class="instructions-list">
+                        <li><a href="https://wasmer.io/" target="_blank">Wasmer</a> - <code>wasmer run Day1.wasm</code></li>
+                        <li><a href="https://wazero.io/" target="_blank">wazero</a> - <code>wazero run Day1.wasm</code></li>
+                    </ul>
                 </div>
-            </div>
-
-            <div id="tab-advanced" class="tab-content">
-                <h3>Run Both Parts</h3>
-                <p>Omit AOC_PART to run both parts:</p>
-                <div class="code-block">
-                    <code><span class="command">wasmtime</span> <span class="flag">--env</span> AOC_INPUT="$(cat input.txt)" <span id="codeWasmFile5">Day1.wasm</span></code>
-                </div>
-
-                <h3>Multiline Input</h3>
-                <p>For multiline input, use file redirection or a heredoc:</p>
-                <div class="code-block">
-                    <code><span class="comment"># Using heredoc (bash)</span>
-<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span class="flag">--env</span> AOC_INPUT="$(cat &lt;&lt;'EOF'
-line 1
-line 2
-line 3
-EOF
-)" <span id="codeWasmFile6">Day1.wasm</span></code>
-                </div>
-
-                <h3>Performance Profiling</h3>
-                <div class="code-block">
-                    <code><span class="comment"># Use time to measure execution</span>
-<span class="command">time</span> <span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile7">Day1.wasm</span> &lt; input.txt
-
-<span class="comment"># Enable optimizations</span>
-<span class="command">wasmtime</span> <span class="flag">--optimize</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile8">Day1.wasm</span> &lt; input.txt</code>
-                </div>
-
-                <h3>Other WASM Runtimes</h3>
-                <p>You can also use other WASI-compatible runtimes:</p>
-                <ul class="instructions-list">
-                    <li><a href="https://wasmer.io/" target="_blank">Wasmer</a> - <code>wasmer run Day1.wasm</code></li>
-                    <li><a href="https://wazero.io/" target="_blank">wazero</a> - <code>wazero run Day1.wasm</code></li>
-                    <li><a href="https://github.com/aspect-build/aspect-cli" target="_blank">aspect</a> - supports WASI natively</li>
-                </ul>
             </div>
         </div>
 
         <div class="footer">
-            <p>Powered by C# compiled to WebAssembly via WASI Component Model</p>
+            <p>C# compiled to WebAssembly</p>
             <p><a href="https://github.com/StefanKert/advent-of-code" target="_blank">View on GitHub</a></p>
         </div>
     </div>
@@ -520,7 +796,7 @@ EOF
             document.getElementById('wasmFileName').textContent = fileName;
 
             // Update all code examples
-            for (let i = 1; i <= 8; i++) {
+            for (let i = 1; i <= 10; i++) {
                 const el = document.getElementById(`codeWasmFile${i}`);
                 if (el) el.textContent = fileName;
             }
@@ -533,7 +809,7 @@ EOF
             for (let day = 1; day <= 25; day++) {
                 const btn = document.createElement('button');
                 btn.className = 'day-btn';
-                btn.textContent = `Day ${day}`;
+                btn.innerHTML = `<span class="day-num">${day}</span>`;
 
                 if (availableDays.includes(day)) {
                     btn.onclick = () => selectDay(day);
@@ -542,7 +818,6 @@ EOF
                     }
                 } else {
                     btn.classList.add('unavailable');
-                    btn.title = 'Coming soon';
                 }
 
                 selector.appendChild(btn);
@@ -552,12 +827,8 @@ EOF
         function selectDay(day) {
             currentDay = day;
 
-            // Update UI
-            document.querySelectorAll('.day-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent === `Day ${day}`) {
-                    btn.classList.add('active');
-                }
+            document.querySelectorAll('.day-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', index + 1 === day);
             });
 
             const info = dayInfo[day] || { title: 'Unknown', description: 'No description available.' };
@@ -565,11 +836,17 @@ EOF
             document.getElementById('dayTitle').textContent = info.title;
             document.getElementById('dayDescription').textContent = info.description;
             document.getElementById('input').value = '';
-            document.getElementById('results').innerHTML = '<p style="color: #888;">Run the solver to see results...</p>';
+            document.getElementById('results').innerHTML = '<p class="empty-results">Run the solver to see results</p>';
             document.getElementById('status').className = 'status success';
             document.getElementById('status').textContent = 'Ready to solve';
 
             updateWasmFileNames(day);
+
+            // Scroll selected day into view on mobile
+            const activeBtn = document.querySelector('.day-btn.active');
+            if (activeBtn && window.innerWidth < 600) {
+                activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
         }
 
         window.solvePuzzle = async function() {
@@ -578,13 +855,15 @@ EOF
             const statusEl = document.getElementById('status');
 
             if (!input.trim()) {
-                resultsEl.innerHTML = '<p class="status error">Please enter puzzle input</p>';
+                statusEl.className = 'status error';
+                statusEl.textContent = 'Please enter puzzle input';
                 return;
             }
 
             const solver = solvers[currentDay];
             if (!solver) {
-                resultsEl.innerHTML = '<p class="status error">Solver not available for this day</p>';
+                statusEl.className = 'status error';
+                statusEl.textContent = 'Solver not available';
                 return;
             }
 
@@ -598,24 +877,23 @@ EOF
                 const elapsed = (performance.now() - startTime).toFixed(2);
 
                 statusEl.className = 'status success';
-                statusEl.textContent = 'Solved successfully!';
+                statusEl.textContent = 'Solved!';
 
                 resultsEl.innerHTML = `
                     <div class="result-item">
-                        <span class="result-label">Part 1:</span>
+                        <span class="result-label">Part 1</span>
                         <span class="result-value">${part1}</span>
                     </div>
                     <div class="result-item part2">
-                        <span class="result-label">Part 2:</span>
+                        <span class="result-label">Part 2</span>
                         <span class="result-value">${part2}</span>
                     </div>
-                    <p class="timing">Solved in ${elapsed}ms</p>
+                    <p class="timing">${elapsed}ms</p>
                 `;
             } catch (error) {
                 console.error('Error solving puzzle:', error);
                 statusEl.className = 'status error';
-                statusEl.textContent = 'Error occurred';
-                resultsEl.innerHTML = `<p class="status error">Error: ${error.message}</p>`;
+                statusEl.textContent = 'Error: ' + error.message;
             }
         };
 
@@ -623,9 +901,11 @@ EOF
             const info = dayInfo[currentDay];
             if (info && info.demo) {
                 document.getElementById('input').value = info.demo;
+                document.getElementById('status').className = 'status success';
+                document.getElementById('status').textContent = 'Demo input loaded';
             } else {
                 document.getElementById('status').className = 'status error';
-                document.getElementById('status').textContent = 'No demo input available for this day';
+                document.getElementById('status').textContent = 'No demo available';
             }
         };
 
@@ -633,11 +913,14 @@ EOF
             const statusEl = document.getElementById('status');
 
             try {
+                statusEl.className = 'status loading';
+                statusEl.textContent = 'Downloading...';
+
                 const wasmPath = getWasmPath(currentDay);
                 const response = await fetch(wasmPath);
 
                 if (!response.ok) {
-                    throw new Error(`WASM file not found (${response.status})`);
+                    throw new Error('Not found');
                 }
 
                 const blob = await response.blob();
@@ -651,24 +934,31 @@ EOF
                 URL.revokeObjectURL(url);
 
                 statusEl.className = 'status success';
-                statusEl.textContent = `Downloaded ${getWasmFileName(currentDay)}`;
+                statusEl.textContent = 'Downloaded!';
             } catch (error) {
-                console.error('Error downloading WASM:', error);
+                console.error('Error downloading:', error);
                 statusEl.className = 'status error';
-                statusEl.textContent = `Download failed: ${error.message}. Build the project first.`;
+                statusEl.textContent = 'Download failed - build first';
+            }
+        };
+
+        window.toggleAccordion = function(header) {
+            const item = header.parentElement;
+            const wasOpen = item.classList.contains('open');
+
+            // Close all
+            document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('open'));
+
+            // Open clicked if it was closed
+            if (!wasOpen) {
+                item.classList.add('open');
             }
         };
 
         window.showTab = function(tabId) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-            // Show selected tab
             document.getElementById(`tab-${tabId}`).classList.add('active');
             event.target.classList.add('active');
         };
