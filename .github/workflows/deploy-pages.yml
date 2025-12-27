@@ -6,6 +6,11 @@ on:
     paths:
       - '2025/src/AdventWasm/**'
       - '.github/workflows/deploy-pages.yml'
+  pull_request:
+    branches: ["main", "master"]
+    paths:
+      - '2025/src/AdventWasm/**'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -87,6 +92,7 @@ jobs:
           path: 2025/src/AdventWasm/demo-app/dist
 
   deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
