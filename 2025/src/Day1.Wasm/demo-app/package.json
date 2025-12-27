@@ -1,0 +1,20 @@
+{
+  "name": "day1-wasm-demo",
+  "version": "1.0.0",
+  "description": "Demo web application for Advent of Code 2025 Day 1 WASI plugin",
+  "type": "module",
+  "scripts": {
+    "transpile": "jco transpile ../bin/Release/net9.0/wasi-wasm/publish/Day1.Wasm.wasm -o ./wasm --name day1",
+    "build": "npm run transpile && vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@anthropic-ai/wasm": "^0.1.0",
+    "@bytecodealliance/jco": "^1.4.0",
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "@bytecodealliance/preview2-shim": "^0.17.0"
+  }
+}
