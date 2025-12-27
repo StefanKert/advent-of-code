@@ -1,0 +1,16 @@
+{
+  "name": "advent-wasm-demo",
+  "version": "1.0.0",
+  "description": "Demo web application for Advent of Code 2025 WASM solvers",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:pages": "vite build",
+    "preview": "vite preview",
+    "test": "node test.js"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

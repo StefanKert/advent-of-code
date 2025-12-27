@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advent of Code 2025 - WASM Solvers</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #00ff88;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            color: #ffcc00;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .day-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .day-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: #e0e0e0;
+            padding: 15px 10px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .day-btn:hover {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+        }
+
+        .day-btn.active {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #1a1a2e;
+            border-color: #00ff88;
+            font-weight: 600;
+        }
+
+        .day-btn.unavailable {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #c9d1d9;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            padding: 15px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+        }
+
+        button:disabled {
+            background: #444;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #00ff88;
+        }
+
+        .result-item.part2 {
+            border-left-color: #ffcc00;
+            background: rgba(255, 204, 0, 0.1);
+        }
+
+        .result-label {
+            font-weight: 600;
+            min-width: 80px;
+            color: #00ff88;
+        }
+
+        .result-item.part2 .result-label {
+            color: #ffcc00;
+        }
+
+        .result-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            font-family: 'Consolas', monospace;
+            word-break: break-all;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status.loading {
+            background: rgba(255, 204, 0, 0.2);
+            border: 1px solid #ffcc00;
+            color: #ffcc00;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+
+        .status.error {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+        }
+
+        .timing {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .day-description {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .footer a {
+            color: #00ff88;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Advent of Code 2025</h1>
+            <p class="subtitle">C# WASM Plugin Demo - All Days</p>
+        </header>
+
+        <div class="card">
+            <h2>Select Day</h2>
+            <div class="day-selector" id="daySelector">
+                <!-- Days will be populated by JS -->
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Day <span id="currentDay">1</span>: <span id="dayTitle">Rotation Counter</span></h2>
+            <p class="day-description" id="dayDescription">Count passes through position zero on a circular dial.</p>
+
+            <div id="status" class="status success">
+                Ready to solve
+            </div>
+
+            <textarea id="input" placeholder="Paste your puzzle input here..."></textarea>
+
+            <div class="button-group">
+                <button id="solveBtn" onclick="solvePuzzle()">Solve Puzzle</button>
+                <button id="loadDemoBtn" class="secondary" onclick="loadDemoInput()">Load Demo Input</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Results</h2>
+            <div id="results" class="results">
+                <p style="color: #888;">Select a day and run the solver to see results...</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by C# compiled to WebAssembly via WASI Component Model</p>
+            <p><a href="https://github.com/StefanKert/advent-of-code" target="_blank">View on GitHub</a></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { solvers, dayInfo } from './solvers/index.js';
+
+        let currentDay = 1;
+        const availableDays = Object.keys(solvers).map(Number).sort((a, b) => a - b);
+
+        function initDaySelector() {
+            const selector = document.getElementById('daySelector');
+            selector.innerHTML = '';
+
+            for (let day = 1; day <= 25; day++) {
+                const btn = document.createElement('button');
+                btn.className = 'day-btn';
+                btn.textContent = `Day ${day}`;
+
+                if (availableDays.includes(day)) {
+                    btn.onclick = () => selectDay(day);
+                    if (day === currentDay) {
+                        btn.classList.add('active');
+                    }
+                } else {
+                    btn.classList.add('unavailable');
+                    btn.title = 'Coming soon';
+                }
+
+                selector.appendChild(btn);
+            }
+        }
+
+        function selectDay(day) {
+            currentDay = day;
+
+            // Update UI
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === `Day ${day}`) {
+                    btn.classList.add('active');
+                }
+            });
+
+            const info = dayInfo[day] || { title: 'Unknown', description: 'No description available.' };
+            document.getElementById('currentDay').textContent = day;
+            document.getElementById('dayTitle').textContent = info.title;
+            document.getElementById('dayDescription').textContent = info.description;
+            document.getElementById('input').value = '';
+            document.getElementById('results').innerHTML = '<p style="color: #888;">Run the solver to see results...</p>';
+            document.getElementById('status').className = 'status success';
+            document.getElementById('status').textContent = 'Ready to solve';
+        }
+
+        window.solvePuzzle = function() {
+            const input = document.getElementById('input').value;
+            const resultsEl = document.getElementById('results');
+            const statusEl = document.getElementById('status');
+
+            if (!input.trim()) {
+                resultsEl.innerHTML = '<p class="status error">Please enter puzzle input</p>';
+                return;
+            }
+
+            const solver = solvers[currentDay];
+            if (!solver) {
+                resultsEl.innerHTML = '<p class="status error">Solver not available for this day</p>';
+                return;
+            }
+
+            try {
+                statusEl.className = 'status loading';
+                statusEl.textContent = 'Solving...';
+
+                const startTime = performance.now();
+                const part1 = solver.solvePart1(input);
+                const part2 = solver.solvePart2(input);
+                const elapsed = (performance.now() - startTime).toFixed(2);
+
+                statusEl.className = 'status success';
+                statusEl.textContent = 'Solved successfully!';
+
+                resultsEl.innerHTML = `
+                    <div class="result-item">
+                        <span class="result-label">Part 1:</span>
+                        <span class="result-value">${part1}</span>
+                    </div>
+                    <div class="result-item part2">
+                        <span class="result-label">Part 2:</span>
+                        <span class="result-value">${part2}</span>
+                    </div>
+                    <p class="timing">Solved in ${elapsed}ms</p>
+                `;
+            } catch (error) {
+                console.error('Error solving puzzle:', error);
+                statusEl.className = 'status error';
+                statusEl.textContent = 'Error occurred';
+                resultsEl.innerHTML = `<p class="status error">Error: ${error.message}</p>`;
+            }
+        };
+
+        window.loadDemoInput = function() {
+            const info = dayInfo[currentDay];
+            if (info && info.demo) {
+                document.getElementById('input').value = info.demo;
+            } else {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = 'No demo input available for this day';
+            }
+        };
+
+        // Initialize
+        initDaySelector();
+        selectDay(1);
+    </script>
+</body>
+</html>
