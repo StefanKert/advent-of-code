@@ -93,6 +93,13 @@ export class WasiShim {
           return 0;
         },
 
+        clock_res_get: (clockId, resPtr) => {
+          const view = new DataView(this.memory.buffer);
+          // Return 1ms resolution in nanoseconds
+          view.setBigUint64(resPtr, 1000000n, true);
+          return 0;
+        },
+
         // Process
         proc_exit: (code) => {
           throw new Error(`Process exited with code ${code}`);
