@@ -69,12 +69,18 @@ jobs:
               # Create output directories
               mkdir -p wasm-transpiled/day${DAY_PADDED}
               mkdir -p wasm-raw
+              mkdir -p wasm-component
 
-              # Copy raw WASM file
+              # Copy raw WASM file (core module)
               cp "$WASM_FILE" "wasm-raw/day${DAY_PADDED}.wasm"
 
-              # Transpile to JS module
-              jco transpile "$WASM_FILE" -o "wasm-transpiled/day${DAY_PADDED}" --name "day${DAY_PADDED}"
+              # Convert WASI core module to Component
+              echo "Converting to WebAssembly Component..."
+              jco new "$WASM_FILE" --wasi-command -o "wasm-component/day${DAY_PADDED}.wasm"
+
+              # Transpile Component to JS module
+              echo "Transpiling to JS..."
+              jco transpile "wasm-component/day${DAY_PADDED}.wasm" -o "wasm-transpiled/day${DAY_PADDED}" --name "day${DAY_PADDED}"
 
               echo "Day ${{ matrix.day }} built and transpiled successfully"
             else
