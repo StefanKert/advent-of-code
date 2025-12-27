@@ -2,7 +2,7 @@ name: Deploy Advent of Code 2025 Calendar to GitHub Pages
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main", "master", "claude/*"]
     paths:
       - '2025/src/Day*/**'
       - '2025/src/advent-of-code-calendar/**'
