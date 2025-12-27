@@ -72,28 +72,17 @@ function getWasmUrl(day) {
 
 // Run a WASI module with the given environment
 async function runWasiModule(wasmUrl, env = {}) {
-    const response = await fetch(wasmUrl);
-    if (!response.ok) {
-        throw new Error(`Failed to fetch ${wasmUrl}: ${response.status}`);
-    }
-    const wasmBytes = await response.arrayBuffer();
+    let stdout = '';
 
-    // Create WASI instance with environment variables
-    const wasi = new WASI({
-        args: [],
+    // Use WASI.start static method with fetch
+    const result = await WASI.start(fetch(wasmUrl), {
+        args: ['solver'],
         env: env,
-        stdout: (out) => { /* collected below */ },
+        stdout: (out) => { stdout += out; },
         stderr: (err) => { console.error('WASM stderr:', err); },
     });
 
-    const { instance } = await WebAssembly.instantiate(wasmBytes, {
-        wasi_snapshot_preview1: wasi.imports,
-    });
-
-    // Run the module and capture stdout
-    const result = await wasi.start(instance);
-
-    return result.stdout || '';
+    return stdout;
 }
 
 // Run a specific day's solver
