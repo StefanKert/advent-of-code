@@ -1,5 +1,7 @@
 node_modules/
 dist/
-wasm/
 .vite/
 *.log
+
+# Note: wasm/ is NOT ignored - contains fallback JS implementation
+# When building with .NET, the transpiled WASM will overwrite day1.js

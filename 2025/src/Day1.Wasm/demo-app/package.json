@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@anthropic-ai/wasm": "^0.1.0",
     "@bytecodealliance/jco": "^1.4.0",
     "vite": "^5.4.0"
   },
