@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main", "master"]
     paths:
-      - '2025/src/AdventWasm/demo-app/**'
+      - '2025/src/AdventWasm/**'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
@@ -24,16 +24,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install WASI workload
+        run: dotnet workload install wasi-experimental
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install jco CLI
+        run: npm install -g @bytecodealliance/jco @bytecodealliance/componentize-js
+
+      - name: Restore .NET dependencies
+        working-directory: 2025/src/AdventWasm
+        run: dotnet restore
+
+      - name: Build C# WASM component
+        working-directory: 2025/src/AdventWasm
+        run: dotnet publish -c Release -o publish
+
+      - name: List published files
+        run: ls -la 2025/src/AdventWasm/publish/
+
+      - name: Find WASM component
+        id: find-wasm
+        run: |
+          WASM_FILE=$(find 2025/src/AdventWasm/publish -name "*.wasm" | head -1)
+          echo "wasm_file=$WASM_FILE" >> $GITHUB_OUTPUT
+          echo "Found WASM file: $WASM_FILE"
+
+      - name: Transpile WASM to JavaScript
+        run: |
+          mkdir -p 2025/src/AdventWasm/demo-app/solvers/advent
+          jco transpile ${{ steps.find-wasm.outputs.wasm_file }} \
+            -o 2025/src/AdventWasm/demo-app/solvers/advent \
+            --name advent
+
+      - name: List transpiled files
+        run: ls -la 2025/src/AdventWasm/demo-app/solvers/advent/
+
+      - name: Install demo app dependencies
         working-directory: 2025/src/AdventWasm/demo-app
         run: npm install
 
-      - name: Build for production
+      - name: Build demo app for production
         working-directory: 2025/src/AdventWasm/demo-app
         run: npm run build:pages
         env:

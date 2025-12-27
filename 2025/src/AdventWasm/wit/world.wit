@@ -1,0 +1,23 @@
+package advent:solvers;
+
+interface solver {
+    /// Solve a specific day and part with the given input
+    /// Returns the result as a string
+    solve: func(day: u8, part: u8, input: string) -> string;
+
+    /// Get list of available days
+    get-available-days: func() -> list<u8>;
+
+    /// Get info about a specific day (title, description)
+    get-day-info: func(day: u8) -> option<day-info>;
+
+    /// Day information record
+    record day-info {
+        title: string,
+        description: string,
+    }
+}
+
+world advent {
+    export solver;
+}
