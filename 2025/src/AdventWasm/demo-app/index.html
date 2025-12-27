@@ -56,6 +56,17 @@
             font-size: 1.3em;
         }
 
+        .card h3 {
+            color: #00ff88;
+            margin-bottom: 10px;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        .card h3:first-of-type {
+            margin-top: 0;
+        }
+
         .day-selector {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -146,6 +157,14 @@
             background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
         }
 
+        button.download {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
+        button.download:hover {
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+        }
+
         .results {
             margin-top: 20px;
         }
@@ -232,6 +251,104 @@
             color: #00ff88;
             text-decoration: none;
         }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+            color: #c9d1d9;
+        }
+
+        .code-block code {
+            white-space: pre;
+        }
+
+        .code-block .comment {
+            color: #8b949e;
+        }
+
+        .code-block .command {
+            color: #7ee787;
+        }
+
+        .code-block .flag {
+            color: #79c0ff;
+        }
+
+        .instructions-list {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        .instructions-list li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .instructions-list a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        .instructions-list a:hover {
+            text-decoration: underline;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #888;
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .download-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .download-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .file-name {
+            font-family: 'Consolas', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: #58a6ff;
+        }
     </style>
 </head>
 <body>
@@ -262,12 +379,118 @@
                 <button id="solveBtn" onclick="solvePuzzle()">Solve Puzzle</button>
                 <button id="loadDemoBtn" class="secondary" onclick="loadDemoInput()">Load Demo Input</button>
             </div>
+
+            <div class="download-section">
+                <div class="download-info">
+                    <button id="downloadBtn" class="download" onclick="downloadWasm()">Download WASM</button>
+                    <span class="file-name" id="wasmFileName">Day1.wasm</span>
+                </div>
+            </div>
         </div>
 
         <div class="card">
             <h2>Results</h2>
             <div id="results" class="results">
                 <p style="color: #888;">Select a day and run the solver to see results...</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Run Locally with Wasmtime</h2>
+            <p style="color: #aaa; margin-bottom: 15px;">
+                Download the WASM file above and run it locally using Wasmtime, a standalone WebAssembly runtime.
+            </p>
+
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="showTab('install')">Installation</button>
+                <button class="tab-btn" onclick="showTab('usage')">Basic Usage</button>
+                <button class="tab-btn" onclick="showTab('advanced')">Advanced</button>
+            </div>
+
+            <div id="tab-install" class="tab-content active">
+                <h3>Install Wasmtime</h3>
+                <ol class="instructions-list">
+                    <li>
+                        <strong>Linux/macOS:</strong> Run this command in your terminal:
+                        <div class="code-block">
+                            <code><span class="command">curl</span> https://wasmtime.dev/install.sh <span class="flag">-sSf</span> | <span class="command">bash</span></code>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Windows:</strong> Download the installer from
+                        <a href="https://github.com/bytecodealliance/wasmtime/releases" target="_blank">GitHub Releases</a>
+                        or use:
+                        <div class="code-block">
+                            <code><span class="command">winget</span> install BytecodeAlliance.Wasmtime</code>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Verify installation:</strong>
+                        <div class="code-block">
+                            <code><span class="command">wasmtime</span> <span class="flag">--version</span></code>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+
+            <div id="tab-usage" class="tab-content">
+                <h3>Running the Solver</h3>
+                <p style="margin-bottom: 15px;">After downloading the WASM file, run it with your puzzle input:</p>
+
+                <h3>Option 1: Using Environment Variables</h3>
+                <div class="code-block">
+                    <code><span class="comment"># Run Part 1</span>
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span class="flag">--env</span> AOC_INPUT="your input here" <span id="codeWasmFile1">Day1.wasm</span>
+
+<span class="comment"># Run Part 2</span>
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=2 <span class="flag">--env</span> AOC_INPUT="your input here" <span id="codeWasmFile2">Day1.wasm</span></code>
+                </div>
+
+                <h3>Option 2: Using File Input (stdin)</h3>
+                <div class="code-block">
+                    <code><span class="comment"># Pipe input from a file</span>
+<span class="command">cat</span> input.txt | <span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile3">Day1.wasm</span>
+
+<span class="comment"># Or use input redirection</span>
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile4">Day1.wasm</span> &lt; input.txt</code>
+                </div>
+            </div>
+
+            <div id="tab-advanced" class="tab-content">
+                <h3>Run Both Parts</h3>
+                <p>Omit AOC_PART to run both parts:</p>
+                <div class="code-block">
+                    <code><span class="command">wasmtime</span> <span class="flag">--env</span> AOC_INPUT="$(cat input.txt)" <span id="codeWasmFile5">Day1.wasm</span></code>
+                </div>
+
+                <h3>Multiline Input</h3>
+                <p>For multiline input, use file redirection or a heredoc:</p>
+                <div class="code-block">
+                    <code><span class="comment"># Using heredoc (bash)</span>
+<span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span class="flag">--env</span> AOC_INPUT="$(cat &lt;&lt;'EOF'
+line 1
+line 2
+line 3
+EOF
+)" <span id="codeWasmFile6">Day1.wasm</span></code>
+                </div>
+
+                <h3>Performance Profiling</h3>
+                <div class="code-block">
+                    <code><span class="comment"># Use time to measure execution</span>
+<span class="command">time</span> <span class="command">wasmtime</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile7">Day1.wasm</span> &lt; input.txt
+
+<span class="comment"># Enable optimizations</span>
+<span class="command">wasmtime</span> <span class="flag">--optimize</span> <span class="flag">--env</span> AOC_PART=1 <span id="codeWasmFile8">Day1.wasm</span> &lt; input.txt</code>
+                </div>
+
+                <h3>Other WASM Runtimes</h3>
+                <p>You can also use other WASI-compatible runtimes:</p>
+                <ul class="instructions-list">
+                    <li><a href="https://wasmer.io/" target="_blank">Wasmer</a> - <code>wasmer run Day1.wasm</code></li>
+                    <li><a href="https://wazero.io/" target="_blank">wazero</a> - <code>wazero run Day1.wasm</code></li>
+                    <li><a href="https://github.com/aspect-build/aspect-cli" target="_blank">aspect</a> - supports WASI natively</li>
+                </ul>
             </div>
         </div>
 
@@ -282,6 +505,26 @@
 
         let currentDay = 1;
         const availableDays = Object.keys(solvers).map(Number).sort((a, b) => a - b);
+
+        function getWasmFileName(day) {
+            return `Day${day}.wasm`;
+        }
+
+        function getWasmPath(day) {
+            const dayStr = day.toString().padStart(2, '0');
+            return `./wasm/day${dayStr}/day${dayStr}.wasm`;
+        }
+
+        function updateWasmFileNames(day) {
+            const fileName = getWasmFileName(day);
+            document.getElementById('wasmFileName').textContent = fileName;
+
+            // Update all code examples
+            for (let i = 1; i <= 8; i++) {
+                const el = document.getElementById(`codeWasmFile${i}`);
+                if (el) el.textContent = fileName;
+            }
+        }
 
         function initDaySelector() {
             const selector = document.getElementById('daySelector');
@@ -325,6 +568,8 @@
             document.getElementById('results').innerHTML = '<p style="color: #888;">Run the solver to see results...</p>';
             document.getElementById('status').className = 'status success';
             document.getElementById('status').textContent = 'Ready to solve';
+
+            updateWasmFileNames(day);
         }
 
         window.solvePuzzle = async function() {
@@ -382,6 +627,50 @@
                 document.getElementById('status').className = 'status error';
                 document.getElementById('status').textContent = 'No demo input available for this day';
             }
+        };
+
+        window.downloadWasm = async function() {
+            const statusEl = document.getElementById('status');
+
+            try {
+                const wasmPath = getWasmPath(currentDay);
+                const response = await fetch(wasmPath);
+
+                if (!response.ok) {
+                    throw new Error(`WASM file not found (${response.status})`);
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = getWasmFileName(currentDay);
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                statusEl.className = 'status success';
+                statusEl.textContent = `Downloaded ${getWasmFileName(currentDay)}`;
+            } catch (error) {
+                console.error('Error downloading WASM:', error);
+                statusEl.className = 'status error';
+                statusEl.textContent = `Download failed: ${error.message}. Build the project first.`;
+            }
+        };
+
+        window.showTab = function(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            event.target.classList.add('active');
         };
 
         // Initialize
