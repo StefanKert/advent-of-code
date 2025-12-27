@@ -69,13 +69,13 @@ export const dayInfo = {
 const wasmNotLoadedMessage = 'WASM module not loaded - build the C# project first';
 
 // This will be replaced by the actual WASM solver during build
-let wasmSolver = null;
+let wasmModule = null;
 
 // Try to load the WASM module dynamically
 async function loadWasmSolver() {
     try {
-        const module = await import('./advent/advent.mjs');
-        wasmSolver = module;
+        const module = await import('./advent/advent.js');
+        wasmModule = module;
         console.log('WASM solver loaded successfully');
         return true;
     } catch (e) {
@@ -91,14 +91,14 @@ loadWasmSolver();
 function createSolver(day) {
     return {
         solvePart1(input) {
-            if (wasmSolver) {
-                return wasmSolver.solver.solve(day, 1, input);
+            if (wasmModule) {
+                return wasmModule.solve(day, 1, input);
             }
             return wasmNotLoadedMessage;
         },
         solvePart2(input) {
-            if (wasmSolver) {
-                return wasmSolver.solver.solve(day, 2, input);
+            if (wasmModule) {
+                return wasmModule.solve(day, 2, input);
             }
             return wasmNotLoadedMessage;
         }
@@ -123,7 +123,7 @@ export const solvers = {
 
 // Export function to check if WASM is loaded
 export function isWasmLoaded() {
-    return wasmSolver !== null;
+    return wasmModule !== null;
 }
 
 // Export function to manually load WASM

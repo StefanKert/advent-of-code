@@ -2,7 +2,7 @@ using AdventWasm.Solvers;
 
 namespace AdventWasm;
 
-public class SolverImpl : exports.advent.solvers.ISolver
+public class AdventImpl : IAdvent
 {
     private static readonly Dictionary<byte, ISolver> Solvers = new()
     {
@@ -35,18 +35,8 @@ public class SolverImpl : exports.advent.solvers.ISolver
         };
     }
 
-    public static List<byte> GetAvailableDays()
+    public static byte[] GetAvailableDays()
     {
-        return Solvers.Keys.OrderBy(k => k).ToList();
-    }
-
-    public static exports.advent.solvers.ISolver.DayInfo? GetDayInfo(byte day)
-    {
-        if (!Solvers.TryGetValue(day, out var solver))
-        {
-            return null;
-        }
-
-        return new exports.advent.solvers.ISolver.DayInfo(solver.Title, solver.Description);
+        return Solvers.Keys.OrderBy(k => k).ToArray();
     }
 }
