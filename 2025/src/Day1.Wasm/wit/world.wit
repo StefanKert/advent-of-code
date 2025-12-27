@@ -1,0 +1,16 @@
+package advent:day1;
+
+interface solver {
+    /// Solve part 1 of the puzzle with the given input
+    solve-part1: func(input: string) -> s32;
+
+    /// Solve part 2 of the puzzle with the given input
+    solve-part2: func(input: string) -> s32;
+
+    /// Solve both parts and return formatted results
+    solve-all: func(input: string) -> string;
+}
+
+world day1 {
+    export solver;
+}
