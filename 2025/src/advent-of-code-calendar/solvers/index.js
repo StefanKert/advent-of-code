@@ -1,3 +1,5 @@
+import { runWasiModule } from '../lib/wasi-shim.js';
+
 // Day information with demo inputs
 export const dayInfo = {
     1: {
@@ -62,58 +64,22 @@ export const dayInfo = {
     }
 };
 
-// Cache for loaded WASM modules
-const wasmModules = {};
-
-// Load a specific day's WASM module
-async function loadDayWasm(day) {
+// Get WASM file URL for a day
+function getWasmUrl(day) {
     const dayStr = day.toString().padStart(2, '0');
-
-    if (wasmModules[day]) {
-        return wasmModules[day];
-    }
-
-    try {
-        // Import the transpiled module for this specific day
-        const module = await import(`../wasm/day${dayStr}/day${dayStr}.js`);
-        wasmModules[day] = module;
-        console.log(`Day ${day} WASM loaded successfully`);
-        return module;
-    } catch (e) {
-        console.warn(`Day ${day} WASM not available:`, e.message);
-        return null;
-    }
+    return `./wasm/day${dayStr}.wasm`;
 }
 
 // Run a specific day's solver
 async function runDaySolver(day, part, input) {
-    const module = await loadDayWasm(day);
-
-    if (!module) {
-        return `Day ${day} WASM module not loaded - build the project first`;
-    }
+    const wasmUrl = getWasmUrl(day);
 
     try {
-        let output = '';
-
-        // Get the run function from the module
-        const run = module.run || module.default;
-
-        if (run) {
-            await run({
-                args: ['solver', part.toString()],
-                env: {
-                    AOC_PART: part.toString(),
-                    AOC_INPUT: input
-                },
-                stdin: input,
-                stdout: (data) => { output += data; },
-                stderr: (data) => { console.error(`Day ${day} stderr:`, data); }
-            });
-            return output.trim() || 'No output';
-        } else {
-            return 'WASM run function not found';
-        }
+        const output = await runWasiModule(wasmUrl, {
+            AOC_PART: part.toString(),
+            AOC_INPUT: input
+        });
+        return output || 'No output';
     } catch (e) {
         console.error(`Error running Day ${day}:`, e);
         return `Error: ${e.message}`;
@@ -147,10 +113,3 @@ export const solvers = {
     11: createSolver(11),
     12: createSolver(12),
 };
-
-// Export utilities
-export function isWasmLoaded(day) {
-    return !!wasmModules[day];
-}
-
-export { loadDayWasm };

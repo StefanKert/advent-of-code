@@ -7,11 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:pages": "vite build",
-    "preview": "vite preview",
-    "test": "node test.js"
-  },
-  "dependencies": {
-    "@bytecodealliance/preview2-shim": "^0.17.0"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "vite": "^5.4.0"

@@ -41,14 +41,6 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install jco CLI
-        run: npm install -g @bytecodealliance/jco
-
       - name: Build Day ${{ matrix.day }}
         run: |
           DAY_DIR="2025/src/Day${{ matrix.day }}"
@@ -58,31 +50,16 @@ jobs:
             echo "Building Day ${{ matrix.day }}..."
             dotnet publish "$DAY_DIR" -c Release
 
-            # WASM file is generated in bin/Release, not publish folder
+            # WASM file is generated in bin/Release
             echo "Searching for WASM file in $DAY_DIR..."
             find "$DAY_DIR" -name "*.wasm" -type f
 
             WASM_FILE=$(find "$DAY_DIR" -name "*.wasm" -type f | head -1)
             if [ -n "$WASM_FILE" ]; then
               echo "Found WASM: $WASM_FILE"
-
-              # Create output directories
-              mkdir -p wasm-transpiled/day${DAY_PADDED}
-              mkdir -p wasm-raw
-              mkdir -p wasm-component
-
-              # Copy raw WASM file (core module)
-              cp "$WASM_FILE" "wasm-raw/day${DAY_PADDED}.wasm"
-
-              # Convert WASI core module to Component
-              echo "Converting to WebAssembly Component..."
-              jco new "$WASM_FILE" --wasi-command -o "wasm-component/day${DAY_PADDED}.wasm"
-
-              # Transpile Component to JS module
-              echo "Transpiling to JS..."
-              jco transpile "wasm-component/day${DAY_PADDED}.wasm" -o "wasm-transpiled/day${DAY_PADDED}" --name "day${DAY_PADDED}"
-
-              echo "Day ${{ matrix.day }} built and transpiled successfully"
+              mkdir -p wasm-output
+              cp "$WASM_FILE" "wasm-output/day${DAY_PADDED}.wasm"
+              echo "Day ${{ matrix.day }} built successfully"
             else
               echo "ERROR: No WASM file found for Day ${{ matrix.day }}"
               exit 1
@@ -92,18 +69,11 @@ jobs:
             exit 1
           fi
 
-      - name: Upload transpiled WASM artifact
+      - name: Upload WASM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wasm-day-${{ matrix.day }}-transpiled
-          path: wasm-transpiled/
-          retention-days: 1
-
-      - name: Upload raw WASM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wasm-day-${{ matrix.day }}-raw
-          path: wasm-raw/
+          name: wasm-day-${{ matrix.day }}
+          path: wasm-output/
           retention-days: 1
 
   # Combine all WASM files and build the web app
@@ -119,32 +89,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Download all transpiled WASM artifacts
+      - name: Download all WASM artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: wasm-day-*-transpiled
-          path: 2025/src/advent-of-code-calendar/wasm
-          merge-multiple: true
-
-      - name: Download all raw WASM artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: wasm-day-*-raw
-          path: raw-wasm-files
+          pattern: wasm-day-*
+          path: 2025/src/advent-of-code-calendar/public/wasm
           merge-multiple: true
 
       - name: List WASM files
         run: |
-          echo "=== Transpiled WASM directory structure ==="
-          ls -laR 2025/src/advent-of-code-calendar/wasm/ || echo "No wasm directory"
-          echo ""
-          echo "=== Raw WASM files ==="
-          ls -la raw-wasm-files/ || echo "No raw wasm files"
-
-      - name: Copy raw WASM files to app
-        run: |
-          mkdir -p 2025/src/advent-of-code-calendar/public/wasm-download
-          cp raw-wasm-files/*.wasm 2025/src/advent-of-code-calendar/public/wasm-download/
+          echo "=== WASM files ==="
+          ls -la 2025/src/advent-of-code-calendar/public/wasm/
 
       - name: Install app dependencies
         working-directory: 2025/src/advent-of-code-calendar
@@ -168,7 +123,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wasm-files
-          path: raw-wasm-files/
+          path: 2025/src/advent-of-code-calendar/public/wasm/
           retention-days: 90
 
   deploy:
