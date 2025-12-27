@@ -92,7 +92,6 @@ jobs:
           path: 2025/src/AdventWasm/demo-app/dist
 
   deploy:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
