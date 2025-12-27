@@ -1,6 +1,0 @@
-package advent:solver;
-
-world advent {
-    export solve: func(day: u8, part: u8, input: string) -> string;
-    export get-available-days: func() -> list<u8>;
-}

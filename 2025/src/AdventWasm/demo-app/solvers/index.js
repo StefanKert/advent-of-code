@@ -1,6 +1,3 @@
-// This file will be replaced by the transpiled WASM component during build
-// For local development without WASM, this provides a stub implementation
-
 // Day information with demo inputs
 export const dayInfo = {
     1: {
@@ -65,42 +62,71 @@ export const dayInfo = {
     }
 };
 
-// Placeholder message for when WASM is not loaded
-const wasmNotLoadedMessage = 'WASM module not loaded - build the C# project first';
-
-// This will be replaced by the actual WASM solver during build
+// WASM module runner
 let wasmModule = null;
+let wasmRun = null;
 
 // Try to load the WASM module dynamically
 async function loadWasmSolver() {
     try {
+        // Import the jco-transpiled module
         const module = await import('./advent/advent.js');
         wasmModule = module;
-        console.log('WASM solver loaded successfully');
+        wasmRun = module.run || module.default;
+        console.log('WASM solver loaded successfully', Object.keys(module));
         return true;
     } catch (e) {
-        console.warn('WASM solver not available, using stub implementation:', e.message);
+        console.warn('WASM solver not available:', e.message);
         return false;
     }
 }
 
-// Attempt to load WASM on module initialization
-loadWasmSolver();
+// Run the WASM solver
+async function runSolver(day, part, input) {
+    if (!wasmModule) {
+        await loadWasmSolver();
+    }
 
-// Solver wrapper that delegates to WASM when available
+    if (!wasmModule) {
+        return 'WASM module not loaded - build the C# project first';
+    }
+
+    try {
+        // For jco-transpiled WASI modules, we need to set up stdin/stdout/env
+        let output = '';
+
+        // Check what exports are available
+        if (wasmRun) {
+            // Run as a command with args
+            const result = await wasmRun({
+                args: ['solver', day.toString(), part.toString()],
+                env: {
+                    AOC_DAY: day.toString(),
+                    AOC_PART: part.toString(),
+                    AOC_INPUT: input
+                },
+                stdin: input,
+                stdout: (data) => { output += data; },
+                stderr: (data) => { console.error('WASM stderr:', data); }
+            });
+            return output.trim() || 'No output';
+        } else {
+            return 'WASM run function not found';
+        }
+    } catch (e) {
+        console.error('Error running WASM:', e);
+        return `Error: ${e.message}`;
+    }
+}
+
+// Solver wrapper
 function createSolver(day) {
     return {
-        solvePart1(input) {
-            if (wasmModule) {
-                return wasmModule.solve(day, 1, input);
-            }
-            return wasmNotLoadedMessage;
+        async solvePart1(input) {
+            return await runSolver(day, 1, input);
         },
-        solvePart2(input) {
-            if (wasmModule) {
-                return wasmModule.solve(day, 2, input);
-            }
-            return wasmNotLoadedMessage;
+        async solvePart2(input) {
+            return await runSolver(day, 2, input);
         }
     };
 }
@@ -121,10 +147,9 @@ export const solvers = {
     12: createSolver(12),
 };
 
-// Export function to check if WASM is loaded
+// Export utilities
 export function isWasmLoaded() {
     return wasmModule !== null;
 }
 
-// Export function to manually load WASM
 export { loadWasmSolver };

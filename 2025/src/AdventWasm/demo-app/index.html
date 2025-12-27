@@ -327,7 +327,7 @@
             document.getElementById('status').textContent = 'Ready to solve';
         }
 
-        window.solvePuzzle = function() {
+        window.solvePuzzle = async function() {
             const input = document.getElementById('input').value;
             const resultsEl = document.getElementById('results');
             const statusEl = document.getElementById('status');
@@ -348,8 +348,8 @@
                 statusEl.textContent = 'Solving...';
 
                 const startTime = performance.now();
-                const part1 = solver.solvePart1(input);
-                const part2 = solver.solvePart2(input);
+                const part1 = await solver.solvePart1(input);
+                const part2 = await solver.solvePart2(input);
                 const elapsed = (performance.now() - startTime).toFixed(2);
 
                 statusEl.className = 'status success';

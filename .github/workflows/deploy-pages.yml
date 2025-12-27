@@ -29,19 +29,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 9
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
-
-      - name: List available workloads
-        run: dotnet workload search
-
-      - name: Install WASI workload
-        run: dotnet workload install wasi-experimental || dotnet workload install wasi-wasm || echo "Workload install skipped"
-
-      - name: List installed workloads
-        run: dotnet workload list
+          dotnet-version: '8.0.x'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
