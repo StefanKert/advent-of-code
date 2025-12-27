@@ -1,7 +1,7 @@
 {
-  "name": "advent-wasm-demo",
+  "name": "advent-of-code-calendar",
   "version": "1.0.0",
-  "description": "Demo web application for Advent of Code 2025 WASM solvers",
+  "description": "Advent of Code 2025 WASM solvers calendar",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,17 +1,17 @@
-name: Deploy Advent of Code 2025 WASM Demo to GitHub Pages
+name: Deploy Advent of Code 2025 Calendar to GitHub Pages
 
 on:
   push:
     branches: ["main", "master"]
     paths:
       - '2025/src/Day*/**'
-      - '2025/src/AdventWasm/demo-app/**'
+      - '2025/src/advent-of-code-calendar/**'
       - '.github/workflows/deploy-pages.yml'
   pull_request:
     branches: ["main", "master"]
     paths:
       - '2025/src/Day*/**'
-      - '2025/src/AdventWasm/demo-app/**'
+      - '2025/src/advent-of-code-calendar/**'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
@@ -123,7 +123,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: wasm-day-*-transpiled
-          path: 2025/src/AdventWasm/demo-app/wasm
+          path: 2025/src/advent-of-code-calendar/wasm
           merge-multiple: true
 
       - name: Download all raw WASM artifacts
@@ -136,22 +136,22 @@ jobs:
       - name: List WASM files
         run: |
           echo "=== Transpiled WASM directory structure ==="
-          ls -laR 2025/src/AdventWasm/demo-app/wasm/ || echo "No wasm directory"
+          ls -laR 2025/src/advent-of-code-calendar/wasm/ || echo "No wasm directory"
           echo ""
           echo "=== Raw WASM files ==="
           ls -la raw-wasm-files/ || echo "No raw wasm files"
 
-      - name: Copy raw WASM files to demo app
+      - name: Copy raw WASM files to app
         run: |
-          mkdir -p 2025/src/AdventWasm/demo-app/public/wasm-download
-          cp raw-wasm-files/*.wasm 2025/src/AdventWasm/demo-app/public/wasm-download/
+          mkdir -p 2025/src/advent-of-code-calendar/public/wasm-download
+          cp raw-wasm-files/*.wasm 2025/src/advent-of-code-calendar/public/wasm-download/
 
-      - name: Install demo app dependencies
-        working-directory: 2025/src/AdventWasm/demo-app
+      - name: Install app dependencies
+        working-directory: 2025/src/advent-of-code-calendar
         run: npm install
 
-      - name: Build demo app for production
-        working-directory: 2025/src/AdventWasm/demo-app
+      - name: Build app for production
+        working-directory: 2025/src/advent-of-code-calendar
         run: npm run build:pages
         env:
           BASE_URL: /advent-of-code/
@@ -162,7 +162,7 @@ jobs:
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 2025/src/AdventWasm/demo-app/dist
+          path: 2025/src/advent-of-code-calendar/dist
 
       - name: Upload WASM-only artifact
         uses: actions/upload-artifact@v4
