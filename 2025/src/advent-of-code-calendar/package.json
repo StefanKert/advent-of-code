@@ -9,6 +9,9 @@
     "build:pages": "vite build",
     "preview": "vite preview"
   },
+  "dependencies": {
+    "@aspect/browser-wasi-shim": "^0.0.6"
+  },
   "devDependencies": {
     "vite": "^5.4.0"
   }
