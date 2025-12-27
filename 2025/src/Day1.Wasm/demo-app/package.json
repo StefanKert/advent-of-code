@@ -6,6 +6,7 @@
   "scripts": {
     "transpile": "jco transpile ../bin/Release/net9.0/wasi-wasm/publish/Day1.Wasm.wasm -o ./wasm --name day1",
     "build": "npm run transpile && vite build",
+    "build:pages": "vite build",
     "dev": "vite",
     "preview": "vite preview"
   },
