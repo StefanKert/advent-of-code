@@ -56,9 +56,13 @@ jobs:
 
           if [ -d "$DAY_DIR" ]; then
             echo "Building Day ${{ matrix.day }}..."
-            dotnet publish "$DAY_DIR" -c Release -o "$DAY_DIR/publish"
+            dotnet publish "$DAY_DIR" -c Release
 
-            WASM_FILE=$(find "$DAY_DIR/publish" -name "*.wasm" | head -1)
+            # WASM file is generated in bin/Release, not publish folder
+            echo "Searching for WASM file in $DAY_DIR..."
+            find "$DAY_DIR" -name "*.wasm" -type f
+
+            WASM_FILE=$(find "$DAY_DIR" -name "*.wasm" -type f | head -1)
             if [ -n "$WASM_FILE" ]; then
               echo "Found WASM: $WASM_FILE"
 
