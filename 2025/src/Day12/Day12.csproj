@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="BytecodeAlliance.Componentize.DotNet.Wasm.SDK" Version="0.6.0-preview00009" />
+    <PackageReference Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="10.0.0-*" />
   </ItemGroup>
 
   <ItemGroup>
