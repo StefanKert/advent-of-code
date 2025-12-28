@@ -467,6 +467,37 @@
             font-size: 0.7rem;
         }
 
+        .platform-warning {
+            background: rgba(255, 170, 0, 0.15);
+            border: 1px solid #ffaa00;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .platform-warning.visible {
+            display: block;
+        }
+
+        .platform-warning h3 {
+            color: #ffaa00;
+            margin: 0 0 8px 0;
+            font-size: 1rem;
+        }
+
+        .platform-warning p {
+            color: #e0e0e0;
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .platform-warning .highlight {
+            color: #00ff88;
+            font-weight: 600;
+        }
+
         /* Tablet and Desktop styles */
         @media (min-width: 600px) {
             body {
@@ -617,6 +648,16 @@
             <h1>Advent of Code 2025</h1>
             <p class="subtitle">C# WASM Solvers</p>
         </header>
+
+        <!-- Platform Warning (shown on iOS) -->
+        <div class="platform-warning" id="platformWarning">
+            <h3>iOS/iPadOS Not Supported</h3>
+            <p>
+                .NET WebAssembly requires more stack space than iOS Safari allows.
+                <span class="highlight">Download the WASM file</span> and run it locally with
+                <a href="https://wasmtime.dev/" target="_blank" style="color: #58a6ff;">wasmtime</a>.
+            </p>
+        </div>
 
         <!-- Day Selector -->
         <div class="card">
@@ -790,7 +831,7 @@
     </div>
 
     <script type="module">
-        import { solvers, dayInfo } from './solvers/index.js';
+        import { solvers, dayInfo, checkPlatformSupport } from './solvers/index.js';
 
         let currentDay = 1;
         const availableDays = Object.keys(solvers).map(Number).sort((a, b) => a - b);
@@ -988,6 +1029,12 @@
             versionEl.textContent = `v${version} (${commitSha})`;
         } else {
             versionEl.textContent = `v${version}`;
+        }
+
+        // Check platform support and show warning if needed
+        const platform = checkPlatformSupport();
+        if (!platform.supported) {
+            document.getElementById('platformWarning').classList.add('visible');
         }
     </script>
 </body>

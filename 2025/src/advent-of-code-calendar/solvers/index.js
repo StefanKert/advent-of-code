@@ -62,6 +62,23 @@ export const dayInfo = {
     }
 };
 
+// Detect iOS/iPadOS (has limited WASM stack size)
+function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Check if running on unsupported platform
+export function checkPlatformSupport() {
+    if (isIOSDevice()) {
+        return {
+            supported: false,
+            message: 'iOS/iPadOS not supported for in-browser execution due to WebAssembly stack limitations. Download the WASM file and run locally with wasmtime.'
+        };
+    }
+    return { supported: true };
+}
+
 // Get WASM file URL for a day (returns absolute URL for worker compatibility)
 function getWasmUrl(day) {
     const dayStr = day.toString().padStart(2, '0');
@@ -144,6 +161,12 @@ function runWasiModuleInWorker(wasmUrl, env) {
 
 // Run a specific day's solver
 async function runDaySolver(day, part, input) {
+    // Check platform support first
+    const platform = checkPlatformSupport();
+    if (!platform.supported) {
+        return `Unsupported: ${platform.message}`;
+    }
+
     const wasmUrl = getWasmUrl(day);
     const env = {
         AOC_PART: part.toString(),
