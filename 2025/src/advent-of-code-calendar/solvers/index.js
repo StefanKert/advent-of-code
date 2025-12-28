@@ -62,10 +62,11 @@ export const dayInfo = {
     }
 };
 
-// Get WASM file URL for a day
+// Get WASM file URL for a day (returns absolute URL for worker compatibility)
 function getWasmUrl(day) {
     const dayStr = day.toString().padStart(2, '0');
-    return `./wasm/day${dayStr}.wasm`;
+    // Convert to absolute URL so it works correctly in WebWorker context
+    return new URL(`./wasm/day${dayStr}.wasm`, import.meta.url).href;
 }
 
 // Worker management
