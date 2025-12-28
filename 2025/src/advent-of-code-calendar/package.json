@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@runno/wasi": "^0.10.0"
+    "@bjorn3/browser_wasi_shim": "^0.3.0"
   },
   "devDependencies": {
     "vite": "^5.4.0"
