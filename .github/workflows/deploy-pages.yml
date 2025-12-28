@@ -49,7 +49,7 @@ jobs:
 
           if [ -d "$DAY_DIR" ]; then
             echo "Building Day ${{ matrix.day }}..."
-            dotnet publish "$DAY_DIR" -c Release
+            dotnet build "$DAY_DIR" -c Release
 
             # WASM file is generated in bin/Release
             echo "Searching for WASM file in $DAY_DIR..."

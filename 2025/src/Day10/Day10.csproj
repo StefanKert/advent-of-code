@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BytecodeAlliance.Componentize.DotNet.Wasm.SDK" Version="0.6.0-preview00006" />
+    <PackageReference Include="BytecodeAlliance.Componentize.DotNet.Wasm.SDK" Version="0.6.0-preview00009" />
   </ItemGroup>
 
   <ItemGroup>
