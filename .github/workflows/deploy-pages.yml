@@ -42,6 +42,14 @@ jobs:
           dotnet-version: '10.0.x'
           include-prerelease: true
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install jco
+        run: npm install -g @bytecodealliance/jco
+
       - name: Build Day ${{ matrix.day }}
         run: |
           DAY_DIR="2025/src/Day${{ matrix.day }}"
@@ -51,15 +59,25 @@ jobs:
             echo "Building Day ${{ matrix.day }}..."
             dotnet build "$DAY_DIR" -c Release
 
-            # WASM file is generated in bin/Release
+            # WASM component is generated in bin/Release
             echo "Searching for WASM file in $DAY_DIR..."
             find "$DAY_DIR" -name "*.wasm" -type f
 
             WASM_FILE=$(find "$DAY_DIR" -name "*.wasm" -type f | head -1)
             if [ -n "$WASM_FILE" ]; then
-              echo "Found WASM: $WASM_FILE"
-              mkdir -p wasm-output
-              cp "$WASM_FILE" "wasm-output/day${DAY_PADDED}.wasm"
+              echo "Found WASM component: $WASM_FILE"
+              mkdir -p wasm-output/day${DAY_PADDED}
+
+              # Transpile WASM component to browser-compatible JS + core WASM
+              echo "Transpiling with jco..."
+              jco transpile "$WASM_FILE" -o "wasm-output/day${DAY_PADDED}" --name day${DAY_PADDED}
+
+              # List transpiled output
+              echo "Transpiled files:"
+              ls -la "wasm-output/day${DAY_PADDED}/"
+
+              # Also keep the original component for wasmtime usage
+              cp "$WASM_FILE" "wasm-output/day${DAY_PADDED}.component.wasm"
 
               # Also copy input.txt if it exists
               if [ -f "$DAY_DIR/input.txt" ]; then
@@ -67,7 +85,7 @@ jobs:
                 echo "Copied input.txt for Day ${{ matrix.day }}"
               fi
 
-              echo "Day ${{ matrix.day }} built successfully"
+              echo "Day ${{ matrix.day }} built and transpiled successfully"
             else
               echo "ERROR: No WASM file found for Day ${{ matrix.day }}"
               exit 1

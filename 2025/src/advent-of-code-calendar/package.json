@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@bjorn3/browser_wasi_shim": "^0.3.0"
+    "@bytecodealliance/preview2-shim": "^0.17.0"
   },
   "devDependencies": {
     "vite": "^5.4.0"

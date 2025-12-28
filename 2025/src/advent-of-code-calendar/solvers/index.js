@@ -79,84 +79,73 @@ export function checkPlatformSupport() {
     return { supported: true };
 }
 
-// Get WASM file URL for a day (returns absolute URL for worker compatibility)
-function getWasmUrl(day) {
-    const dayStr = day.toString().padStart(2, '0');
-    // Use document base URL since WASM files are in public/wasm (copied to site root)
-    // import.meta.url points to /assets/ which is wrong for public folder files
+// Get base URL for WASM modules
+function getWasmBaseUrl() {
     const base = new URL('./', window.location.href).href;
-    return `${base}wasm/day${dayStr}.wasm`;
+    return base;
 }
 
-// Worker management
-let wasmWorker = null;
-let workerMessageId = 0;
-const pendingRequests = new Map();
+// Cache for loaded modules
+const moduleCache = new Map();
 
-// Initialize the WebWorker
-function initWorker() {
-    if (wasmWorker) return true;
+// Run a jco-transpiled day solver
+async function runJcoModule(day, part, input) {
+    const dayStr = day.toString().padStart(2, '0');
+    const baseUrl = getWasmBaseUrl();
+    const moduleUrl = `${baseUrl}wasm/day${dayStr}/day${dayStr}.js`;
 
     try {
-        // Create worker from the worker file
-        wasmWorker = new Worker(
-            new URL('./wasm-worker.js', import.meta.url),
-            { type: 'module' }
-        );
+        // Capture stdout output
+        let output = '';
 
-        wasmWorker.onmessage = (e) => {
-            const { id, success, result, error } = e.data;
-            const pending = pendingRequests.get(id);
-            if (pending) {
-                pendingRequests.delete(id);
-                if (success) {
-                    pending.resolve(result);
+        // Import the preview2-shim to configure environment
+        const shim = await import('@bytecodealliance/preview2-shim');
+
+        // Configure environment variables
+        if (shim.environment) {
+            shim.environment.setEnv({
+                AOC_PART: part.toString(),
+                AOC_INPUT: input
+            });
+        }
+
+        // Configure stdout capture
+        if (shim.io && shim.io.stdout) {
+            shim.io.stdout.handler = (data) => {
+                if (data instanceof Uint8Array) {
+                    output += new TextDecoder().decode(data);
                 } else {
-                    pending.reject(new Error(error));
+                    output += data;
                 }
-            }
-        };
+            };
+        }
 
-        wasmWorker.onerror = (e) => {
-            console.error('Worker error:', e);
-            // Reject all pending requests
-            for (const [id, pending] of pendingRequests) {
-                pending.reject(new Error(`Worker error: ${e.message}`));
-                pendingRequests.delete(id);
-            }
-        };
+        // Clear any cached module to ensure fresh run with new env
+        // Dynamic imports are cached, so we add a cache-busting parameter
+        const cacheBuster = `?t=${Date.now()}`;
 
-        return true;
+        // Import and run the transpiled module
+        const module = await import(/* @vite-ignore */ moduleUrl + cacheBuster);
+
+        // The jco-transpiled module typically exports a 'run' function for command components
+        // or the exports are available directly
+        if (typeof module.run === 'function') {
+            await module.run();
+        } else if (typeof module.default === 'function') {
+            await module.default();
+        }
+
+        return output.trim() || 'No output';
     } catch (e) {
-        console.warn('Failed to initialize WebWorker:', e);
-        return false;
+        console.error(`Error running Day ${day}:`, e);
+
+        // Check if module not found
+        if (e.message && e.message.includes('Failed to fetch')) {
+            return `Error: Day ${day} module not found. Build may have failed.`;
+        }
+
+        return `Error: ${e.message}`;
     }
-}
-
-// Run WASM in WebWorker
-function runWasiModuleInWorker(wasmUrl, env) {
-    return new Promise((resolve, reject) => {
-        const id = ++workerMessageId;
-        pendingRequests.set(id, { resolve, reject });
-
-        // Set a timeout for the request
-        const timeout = setTimeout(() => {
-            if (pendingRequests.has(id)) {
-                pendingRequests.delete(id);
-                reject(new Error('WASM execution timed out'));
-            }
-        }, 30000); // 30 second timeout
-
-        // Wrap resolve/reject to clear timeout
-        const origResolve = resolve;
-        const origReject = reject;
-        pendingRequests.set(id, {
-            resolve: (result) => { clearTimeout(timeout); origResolve(result); },
-            reject: (error) => { clearTimeout(timeout); origReject(error); }
-        });
-
-        wasmWorker.postMessage({ id, wasmUrl, env });
-    });
 }
 
 // Run a specific day's solver
@@ -167,24 +156,7 @@ async function runDaySolver(day, part, input) {
         return `Unsupported: ${platform.message}`;
     }
 
-    const wasmUrl = getWasmUrl(day);
-    const env = {
-        AOC_PART: part.toString(),
-        AOC_INPUT: input
-    };
-
-    try {
-        // Try to use WebWorker (better for iOS Safari stack limits)
-        if (initWorker()) {
-            const output = await runWasiModuleInWorker(wasmUrl, env);
-            return output.trim() || 'No output';
-        } else {
-            throw new Error('WebWorker not available');
-        }
-    } catch (e) {
-        console.error(`Error running Day ${day}:`, e);
-        return `Error: ${e.message}`;
-    }
+    return await runJcoModule(day, part, input);
 }
 
 // Create solver wrapper for a specific day

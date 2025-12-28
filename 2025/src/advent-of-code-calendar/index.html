@@ -843,7 +843,8 @@
 
         function getWasmDownloadPath(day) {
             const dayStr = day.toString().padStart(2, '0');
-            return `./wasm/day${dayStr}.wasm`;
+            // Download the original WASI component for wasmtime usage
+            return `./wasm/day${dayStr}.component.wasm`;
         }
 
         function updateWasmFileNames(day) {
