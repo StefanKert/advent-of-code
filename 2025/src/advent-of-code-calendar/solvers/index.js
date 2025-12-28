@@ -1,22 +1,3 @@
-import { WASI, File, OpenFile, ConsoleStdout } from '@bjorn3/browser_wasi_shim';
-
-// Check browser compatibility
-function checkCompatibility() {
-    const issues = [];
-
-    if (typeof BigInt64Array === 'undefined') {
-        issues.push('BigInt64Array not supported (requires Safari 15+)');
-    }
-    if (typeof WebAssembly === 'undefined') {
-        issues.push('WebAssembly not supported');
-    }
-    if (typeof WebAssembly !== 'undefined' && typeof WebAssembly.instantiateStreaming === 'undefined') {
-        // This is okay - we use compile() + instantiate() instead
-    }
-
-    return issues;
-}
-
 // Day information with demo inputs
 export const dayInfo = {
     1: {
@@ -87,98 +68,93 @@ function getWasmUrl(day) {
     return `./wasm/day${dayStr}.wasm`;
 }
 
-// Run a WASI module with the given environment
-async function runWasiModule(wasmUrl, env = {}) {
-    // Check browser compatibility first
-    const compatIssues = checkCompatibility();
-    if (compatIssues.length > 0) {
-        throw new Error(`Browser compatibility issue: ${compatIssues.join(', ')}`);
-    }
+// Worker management
+let wasmWorker = null;
+let workerMessageId = 0;
+const pendingRequests = new Map();
 
-    let stdout = '';
-    let stderr = '';
+// Initialize the WebWorker
+function initWorker() {
+    if (wasmWorker) return true;
 
-    // Convert env object to WASI format: ["KEY=value", ...]
-    const envArray = Object.entries(env).map(([key, value]) => `${key}=${value}`);
-
-    // Set up file descriptors
-    const fds = [
-        new OpenFile(new File([])), // stdin (empty)
-        ConsoleStdout.lineBuffered(msg => { stdout += msg + '\n'; }), // stdout
-        ConsoleStdout.lineBuffered(msg => { stderr += msg + '\n'; console.error('WASM stderr:', msg); }), // stderr
-    ];
-
-    // Initialize WASI
-    let wasi;
     try {
-        wasi = new WASI(['solver'], envArray, fds);
+        // Create worker from the worker file
+        wasmWorker = new Worker(
+            new URL('./wasm-worker.js', import.meta.url),
+            { type: 'module' }
+        );
+
+        wasmWorker.onmessage = (e) => {
+            const { id, success, result, error } = e.data;
+            const pending = pendingRequests.get(id);
+            if (pending) {
+                pendingRequests.delete(id);
+                if (success) {
+                    pending.resolve(result);
+                } else {
+                    pending.reject(new Error(error));
+                }
+            }
+        };
+
+        wasmWorker.onerror = (e) => {
+            console.error('Worker error:', e);
+            // Reject all pending requests
+            for (const [id, pending] of pendingRequests) {
+                pending.reject(new Error(`Worker error: ${e.message}`));
+                pendingRequests.delete(id);
+            }
+        };
+
+        return true;
     } catch (e) {
-        throw new Error(`Failed to initialize WASI: ${e.message}`);
+        console.warn('Failed to initialize WebWorker:', e);
+        return false;
     }
+}
 
-    // Load and instantiate WebAssembly module
-    let response;
-    try {
-        response = await fetch(wasmUrl);
-    } catch (e) {
-        throw new Error(`Network error fetching ${wasmUrl}: ${e.message}`);
-    }
+// Run WASM in WebWorker
+function runWasiModuleInWorker(wasmUrl, env) {
+    return new Promise((resolve, reject) => {
+        const id = ++workerMessageId;
+        pendingRequests.set(id, { resolve, reject });
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch ${wasmUrl}: ${response.status}`);
-    }
+        // Set a timeout for the request
+        const timeout = setTimeout(() => {
+            if (pendingRequests.has(id)) {
+                pendingRequests.delete(id);
+                reject(new Error('WASM execution timed out'));
+            }
+        }, 30000); // 30 second timeout
 
-    let wasmBytes;
-    try {
-        wasmBytes = await response.arrayBuffer();
-    } catch (e) {
-        throw new Error(`Failed to read WASM bytes: ${e.message}`);
-    }
-
-    let wasmModule;
-    try {
-        wasmModule = await WebAssembly.compile(wasmBytes);
-    } catch (e) {
-        throw new Error(`Failed to compile WASM: ${e.message}`);
-    }
-
-    let instance;
-    try {
-        instance = await WebAssembly.instantiate(wasmModule, {
-            wasi_snapshot_preview1: wasi.wasiImport
+        // Wrap resolve/reject to clear timeout
+        const origResolve = resolve;
+        const origReject = reject;
+        pendingRequests.set(id, {
+            resolve: (result) => { clearTimeout(timeout); origResolve(result); },
+            reject: (error) => { clearTimeout(timeout); origReject(error); }
         });
-    } catch (e) {
-        throw new Error(`Failed to instantiate WASM: ${e.message}`);
-    }
 
-    // Execute the WASI program
-    try {
-        wasi.start(instance);
-    } catch (e) {
-        // WASI programs exit by throwing - check if it's a normal exit
-        if (e.message && e.message.includes('exit')) {
-            // Normal exit, ignore
-        } else if (e instanceof WebAssembly.RuntimeError) {
-            // Check for stack overflow or other runtime errors
-            throw new Error(`WASM runtime error: ${e.message}`);
-        } else {
-            throw e;
-        }
-    }
-
-    return stdout;
+        wasmWorker.postMessage({ id, wasmUrl, env });
+    });
 }
 
 // Run a specific day's solver
 async function runDaySolver(day, part, input) {
     const wasmUrl = getWasmUrl(day);
+    const env = {
+        AOC_PART: part.toString(),
+        AOC_INPUT: input
+    };
 
     try {
-        const output = await runWasiModule(wasmUrl, {
-            AOC_PART: part.toString(),
-            AOC_INPUT: input
-        });
-        return output.trim() || 'No output';
+        // Try to use WebWorker (better for iOS Safari stack limits)
+        if (initWorker()) {
+            const output = await runWasiModuleInWorker(wasmUrl, env);
+            return output.trim() || 'No output';
+        } else {
+            throw new Error('WebWorker not available');
+        }
     } catch (e) {
         console.error(`Error running Day ${day}:`, e);
         return `Error: ${e.message}`;
