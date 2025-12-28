@@ -65,8 +65,10 @@ export const dayInfo = {
 // Get WASM file URL for a day (returns absolute URL for worker compatibility)
 function getWasmUrl(day) {
     const dayStr = day.toString().padStart(2, '0');
-    // Convert to absolute URL so it works correctly in WebWorker context
-    return new URL(`./wasm/day${dayStr}.wasm`, import.meta.url).href;
+    // Use document base URL since WASM files are in public/wasm (copied to site root)
+    // import.meta.url points to /assets/ which is wrong for public folder files
+    const base = new URL('./', window.location.href).href;
+    return `${base}wasm/day${dayStr}.wasm`;
 }
 
 // Worker management
