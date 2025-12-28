@@ -1,5 +1,22 @@
 import { WASI, File, OpenFile, ConsoleStdout } from '@bjorn3/browser_wasi_shim';
 
+// Check browser compatibility
+function checkCompatibility() {
+    const issues = [];
+
+    if (typeof BigInt64Array === 'undefined') {
+        issues.push('BigInt64Array not supported (requires Safari 15+)');
+    }
+    if (typeof WebAssembly === 'undefined') {
+        issues.push('WebAssembly not supported');
+    }
+    if (typeof WebAssembly !== 'undefined' && typeof WebAssembly.instantiateStreaming === 'undefined') {
+        // This is okay - we use compile() + instantiate() instead
+    }
+
+    return issues;
+}
+
 // Day information with demo inputs
 export const dayInfo = {
     1: {
@@ -72,6 +89,12 @@ function getWasmUrl(day) {
 
 // Run a WASI module with the given environment
 async function runWasiModule(wasmUrl, env = {}) {
+    // Check browser compatibility first
+    const compatIssues = checkCompatibility();
+    if (compatIssues.length > 0) {
+        throw new Error(`Browser compatibility issue: ${compatIssues.join(', ')}`);
+    }
+
     let stdout = '';
     let stderr = '';
 
@@ -86,18 +109,47 @@ async function runWasiModule(wasmUrl, env = {}) {
     ];
 
     // Initialize WASI
-    const wasi = new WASI(['solver'], envArray, fds);
+    let wasi;
+    try {
+        wasi = new WASI(['solver'], envArray, fds);
+    } catch (e) {
+        throw new Error(`Failed to initialize WASI: ${e.message}`);
+    }
 
     // Load and instantiate WebAssembly module
-    const response = await fetch(wasmUrl);
+    let response;
+    try {
+        response = await fetch(wasmUrl);
+    } catch (e) {
+        throw new Error(`Network error fetching ${wasmUrl}: ${e.message}`);
+    }
+
     if (!response.ok) {
         throw new Error(`Failed to fetch ${wasmUrl}: ${response.status}`);
     }
-    const wasmBytes = await response.arrayBuffer();
-    const wasmModule = await WebAssembly.compile(wasmBytes);
-    const instance = await WebAssembly.instantiate(wasmModule, {
-        wasi_snapshot_preview1: wasi.wasiImport
-    });
+
+    let wasmBytes;
+    try {
+        wasmBytes = await response.arrayBuffer();
+    } catch (e) {
+        throw new Error(`Failed to read WASM bytes: ${e.message}`);
+    }
+
+    let wasmModule;
+    try {
+        wasmModule = await WebAssembly.compile(wasmBytes);
+    } catch (e) {
+        throw new Error(`Failed to compile WASM: ${e.message}`);
+    }
+
+    let instance;
+    try {
+        instance = await WebAssembly.instantiate(wasmModule, {
+            wasi_snapshot_preview1: wasi.wasiImport
+        });
+    } catch (e) {
+        throw new Error(`Failed to instantiate WASM: ${e.message}`);
+    }
 
     // Execute the WASI program
     try {
@@ -106,6 +158,9 @@ async function runWasiModule(wasmUrl, env = {}) {
         // WASI programs exit by throwing - check if it's a normal exit
         if (e.message && e.message.includes('exit')) {
             // Normal exit, ignore
+        } else if (e instanceof WebAssembly.RuntimeError) {
+            // Check for stack overflow or other runtime errors
+            throw new Error(`WASM runtime error: ${e.message}`);
         } else {
             throw e;
         }
