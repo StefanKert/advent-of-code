@@ -105,11 +105,21 @@ jobs:
         working-directory: 2025/src/advent-of-code-calendar
         run: npm install
 
+      - name: Generate version info
+        id: version
+        run: |
+          echo "VERSION=2025.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
       - name: Build app for production
         working-directory: 2025/src/advent-of-code-calendar
         run: npm run build:pages
         env:
           BASE_URL: /advent-of-code/
+          VITE_APP_VERSION: ${{ steps.version.outputs.VERSION }}
+          VITE_COMMIT_SHA: ${{ steps.version.outputs.COMMIT_SHA }}
+          VITE_BUILD_DATE: ${{ steps.version.outputs.BUILD_DATE }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

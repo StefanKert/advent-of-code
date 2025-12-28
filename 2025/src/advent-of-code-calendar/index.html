@@ -455,6 +455,18 @@
             text-decoration: none;
         }
 
+        .version-info {
+            font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            color: #00ff88;
+            font-size: 0.7rem;
+        }
+
         /* Tablet and Desktop styles */
         @media (min-width: 600px) {
             body {
@@ -771,6 +783,7 @@
         </div>
 
         <div class="footer">
+            <p class="version-info" id="versionInfo">Version: dev</p>
             <p>C# compiled to WebAssembly</p>
             <p><a href="https://github.com/StefanKert/advent-of-code" target="_blank">View on GitHub</a></p>
         </div>
@@ -966,6 +979,16 @@
         // Initialize
         initDaySelector();
         selectDay(1);
+
+        // Display version info
+        const version = import.meta.env.VITE_APP_VERSION || 'dev';
+        const commitSha = import.meta.env.VITE_COMMIT_SHA || 'local';
+        const versionEl = document.getElementById('versionInfo');
+        if (version !== 'dev') {
+            versionEl.textContent = `v${version} (${commitSha})`;
+        } else {
+            versionEl.textContent = `v${version}`;
+        }
     </script>
 </body>
 </html>
