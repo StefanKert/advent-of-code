@@ -682,6 +682,7 @@
                 <button id="solveBtn" onclick="solvePuzzle()">Solve Puzzle</button>
                 <div class="button-row">
                     <button class="secondary" onclick="loadDemoInput()">Demo</button>
+                    <button class="secondary" onclick="loadFullInput()">Full Input</button>
                     <button class="download" onclick="downloadWasm()">Download</button>
                 </div>
             </div>
@@ -960,6 +961,30 @@
             } else {
                 document.getElementById('status').className = 'status error';
                 document.getElementById('status').textContent = 'No demo available';
+            }
+        };
+
+        window.loadFullInput = async function() {
+            const statusEl = document.getElementById('status');
+            const dayStr = currentDay.toString().padStart(2, '0');
+            const inputPath = `./wasm/day${dayStr}-input.txt`;
+
+            try {
+                statusEl.className = 'status loading';
+                statusEl.textContent = 'Loading input...';
+
+                const response = await fetch(inputPath);
+                if (!response.ok) {
+                    throw new Error('Input file not found');
+                }
+
+                const inputText = await response.text();
+                document.getElementById('input').value = inputText.trim();
+                statusEl.className = 'status success';
+                statusEl.textContent = 'Full input loaded';
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = 'No input file available';
             }
         };
 

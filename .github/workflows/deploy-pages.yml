@@ -59,6 +59,13 @@ jobs:
               echo "Found WASM: $WASM_FILE"
               mkdir -p wasm-output
               cp "$WASM_FILE" "wasm-output/day${DAY_PADDED}.wasm"
+
+              # Also copy input.txt if it exists
+              if [ -f "$DAY_DIR/input.txt" ]; then
+                cp "$DAY_DIR/input.txt" "wasm-output/day${DAY_PADDED}-input.txt"
+                echo "Copied input.txt for Day ${{ matrix.day }}"
+              fi
+
               echo "Day ${{ matrix.day }} built successfully"
             else
               echo "ERROR: No WASM file found for Day ${{ matrix.day }}"
